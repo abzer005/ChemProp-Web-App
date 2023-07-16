@@ -1,17 +1,23 @@
 #Function: InsideLevels
- InsideLevels <- function(metatable){
-    lev <- c()
-    typ<-c()
-    for(i in 1:ncol(metatable)){
-      x <- levels(droplevels(as.factor(metatable[,i])))
-      if(is.double(metatable[,i])==T){x=round(as.double(x),2)}
-      x <-toString(x)
-      lev <- rbind(lev,x)
-      
-      y <- class(metatable[,i])
-      typ <- rbind(typ,y)
+InsideLevels <- function(metatable){
+    LEVELS <- c() #creating empty vector to store information
+    typ <-c()
+    COUNT <- c()
+    for(i in 1:ncol(metatable)){ # for each metadata column
+      temp <- as.data.frame(table(metatable[,i])) #table function gives the category in each column and the count of each category
+      x <- temp$Var1 #getting the name of each category in every column
+      if(is.double(metatable[,i])==T){ # for numeric columns in metadata table, round the category values
+          x=round(as.double(x),2)
+      } 
+      LEVELS <- rbind(LEVELS,toString(x)) # adding all the category values in a row
+      COUNT <- rbind(COUNT,toString(temp$Freq)) # getting the frequency of each level in every column
+      typ <- rbind(typ,class(metatable[,i])) # getting the class of each column
     }
-    out <- data.frame(INDEX=c(1:ncol(metatable)),ATTRIBUTES=colnames(metatable),LEVELS=lev,TYPE=typ,row.names=NULL)
+    out <- data.frame(INDEX=c(1:ncol(metatable)), #creating an output dataframe with 1st column as INDEX
+                      ATTRIBUTES=colnames(metatable), #2nd column ATTRIBUTES will be the column name of metadata table
+                      LEVELS, #3rd column LEVELS will give the different categories in each ATTRIBUTE
+                      COUNT, #4th column COUNT will give the number of files present with each category
+                      'ATTRIBUTE_CLASS'=typ,row.names=NULL) #Final column indicating the Class or datatype of each ATTTRIBUTE
     return(out)
   }
 
