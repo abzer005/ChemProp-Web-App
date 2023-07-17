@@ -56,7 +56,7 @@ remove_blanks <- function(ft_t, new_md) {
     View(head(md_Samples,3))
     
     # return a list containing the two objects
-    return(list(blk_rem = blk_rem, md_Samples = md_Samples))
+    return(list(blk_rem = blk_rem, md_Samples = md_Samples, Cutoff = Cutoff))
 }
 
 impute_table <- function(blk_rem){
