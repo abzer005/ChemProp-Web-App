@@ -69,9 +69,9 @@ InsideLevels <- function(metatable){
        list_final <- rbind(list_final,sub_list)
      }
      metatable <- list_final #list_final again called as metatable in order to keep it in the for-loop for further subsetting
+     return(metatable)
    }
-   return(metatable)
- }
+ 
 
 
 #Function: SubsetLevels 
