@@ -22,7 +22,8 @@ InsideLevels <- function(metatable){
   }
 
 #Function: SubsetLevels  
-   IRdisplay::display(InsideLevels(metatable)) # use show() when working in RStudio
+SubsetLevels <- function(metatable){ 
+IRdisplay::display(InsideLevels(metatable)) # use show() when working in RStudio
     Condition <- as.double(unlist(strsplit(readline("Enter the IDs of interested attributes to subset (separaed by commas if more than one attribute):"), split=',')))
     
     for( i in 1:length(Condition)){
@@ -31,7 +32,7 @@ InsideLevels <- function(metatable){
       Levels_Cdtn <- levels(droplevels(as.factor(metatable[,Condition[i]])))
       subset_meta <- data.frame(Index=1:length(Levels_Cdtn),Levels_Cdtn)
       colnames(subset_meta)[2] <- paste("Levels_",colnames(metatable[Condition[i]]))
-     IRdisplay::display(subset_meta) # use show() when working in RStudio
+      IRdisplay::display(subset_meta) # use show() when working in RStudio
      
      
      #Among the shown levels of an attribute, select the ones to keep or exclude:
@@ -69,8 +70,9 @@ InsideLevels <- function(metatable){
        list_final <- rbind(list_final,sub_list)
      }
      metatable <- list_final #list_final again called as metatable in order to keep it in the for-loop for further subsetting
-     return(metatable)
    }
+        return(metatable)
+        }
  
 
 
