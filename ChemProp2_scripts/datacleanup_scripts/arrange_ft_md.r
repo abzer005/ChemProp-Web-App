@@ -29,10 +29,10 @@ rownames(new_ft) <- paste(paste0("X",new_ft$`row ID`),
 rownames(new_ft) <- sub("_$", "", rownames(new_ft)) #to remove the trailing underscore at rownames
 
 message('Your new_ft table:')
-View(head(new_ft,2))
+show(head(new_ft,2))
 
 message('Your new_md table:')
-View(head(new_md,2))
+show(head(new_md,2))
 
 # Check if all column names end with 'mzML' or 'mzXML'
 mzML_count <- sum(grepl('\\.mzML$', colnames(new_ft)))
