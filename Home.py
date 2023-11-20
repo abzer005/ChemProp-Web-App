@@ -14,7 +14,7 @@ st.image("assets/ChemProp2.png", use_column_width=True)
 st.subheader("🚧 Under Construction 🚧")
 
 # Introduction
-st.subheader('What is ChemProp2 Used For')
+st.subheader('What is ChemProp2 Used For?')
 st.write("""
          ChemProp2 is a tool developed to address a key challenge in non-targeted metabolomics using liquid chromatography-tandem mass spectrometry (LC–MS/MS), 
          particularly in the study of biotransformation sudies like drug metabolism as well as xenobiotic and natural product biotransformation in the environment. 
