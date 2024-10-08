@@ -25,7 +25,7 @@ def page_setup():
     # streamlit configs
     st.set_page_config(
         page_title="ChemProp2",
-        page_icon="https://raw.githubusercontent.com/abzer005/ChemProp2/main/streamlit/assets/ChemProp2.png",
+        page_icon="⬆️⬇️", 
         layout="wide",
         initial_sidebar_state="auto",
         menu_items=None,
