@@ -1,0 +1,12 @@
+filename	ATTRIBUTE_Time
+Sample1.mzML	t1
+Sample2.mzML	t1
+Sample3.mzML	t2
+Sample4.mzML	t2
+Sample5.mzML	t3
+Sample6.mzML	t3
+Sample7.mzML	t4
+Sample8.mzML	t4
+Sample9.mzML	t5
+Sample10.mzML	t5
+blank.mzML	blank

@@ -1,12 +1,10 @@
 import streamlit as st
+from src.common import *
 
-# page_setup()
-
-# Set page title
-st.set_page_config(page_title="ChemProp2")
+page_setup()
 
 # Page Header
-st.title("ChemProp2")
+#st.title("ChemProp2")
 
 st.image("assets/ChemProp2.png", use_column_width=True)
 

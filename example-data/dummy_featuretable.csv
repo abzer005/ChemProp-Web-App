@@ -1,0 +1,5 @@
+﻿row ID,row m/z,row retention time,Sample1.mzML,Sample2.mzML,Sample3.mzML,Sample4.mzML,Sample5.mzML,Sample6.mzML,Sample7.mzML,Sample8.mzML,Sample9.mzML,Sample10.mzML,blank.mzML
+10,150.0245978,1.4583229,10,10,9,9,8,8,7,7,6,6,0
+20,150.024652,2.3042223,1,1,2,2,3,3,4,4,5,5,0
+30,150.0584883,0.24394739,1,1,2,2,3,3,4,4,5,5,0
+40,150.0742946,0.4567853,10,10,9,9,8,8,7,7,6,6,0
