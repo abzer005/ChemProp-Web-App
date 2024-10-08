@@ -9,13 +9,6 @@ dataframe_names = ("md",
                    "an_gnps",
                    "an_analog")
 
-corrections_map = {"Bonferroni": "bonf",
-                   "Sidak": "sidak",
-                   "Benjamini/Hochberg FDR": "fdr_bh",
-                   "Benjamini/Yekutieli FDR": "fdr_by",
-                   "no correction": "none"}
-
-
 def reset_dataframes():
     for key in dataframe_names:
         st.session_state[key] = pd.DataFrame()
