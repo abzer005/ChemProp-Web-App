@@ -1,8 +1,6 @@
 import streamlit as st
 from .common import *  # Importing common functionalities from the 'common' module
 import pandas as pd
-from gnpsdata import taskresult
-from gnpsdata import workflow_fbmn
 
 patterns = [
     ["m/z", "mz", "mass over charge"],
