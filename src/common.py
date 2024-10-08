@@ -33,9 +33,6 @@ def page_setup():
 
     with st.sidebar:
         with st.expander("⚙️ Settings", expanded=True):
-            st.selectbox("p-value correction",
-                         corrections_map.keys(),
-                         key="p_value_correction")
             st.selectbox(
                 "image export format",
                 ["svg", "png", "jpeg", "webp"],
