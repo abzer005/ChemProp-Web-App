@@ -7,6 +7,7 @@ scikit-posthocs==0.9.0
 scikit-bio==0.5.9
 scipy==1.10.1  # Required for spearmanr, pearsonr, and distance
 scikit-learn==1.3.0  # Required for StandardScaler
-setuptools  # Include setuptools to make sure distutils is available
-git+https://github.com/Wang-Bioinformatics-Lab/GNPSDataPackage.git  # Install from GitHub
+setuptools>=68.0.0
+wheel>=0.38.4
+pip>=24.2  # Ensures the latest pip is used
 
