@@ -110,6 +110,41 @@ def remove_blank_features(blanks, samples, cutoff):
     return blank_removal, n_background, n_real_features
 
 
+@st.cache_data
+def impute_missing_values(df, cutoff_LOD):
+    # impute missing values (0) with a random value between one and lowest intensity (cutoff_LOD)
+    if cutoff_LOD > 1:
+        return df.apply(
+            lambda x: [np.random.randint(1, cutoff_LOD) if v == 0 else v for v in x]
+        )
+
+@st.cache_data
+def normalization(feature_df, meta_data_df):
+    # Transpose feature table for processing
+    feature_df = feature_df.T
+
+    # Remove metadata rows that are not in the feature table
+    md_rows_not_in_samples = [row for row in meta_data_df.index if row not in feature_df.index]
+    md_samples = meta_data_df.drop(md_rows_not_in_samples)
+
+    # Put feature table and metadata in the same order
+    feature_df.sort_index(inplace=True)
+    md_samples.sort_index(inplace=True)
+
+    # Ensure sample names are the same between feature and metadata tables
+    try:
+        if not md_samples.index.equals(feature_df.index):
+            st.warning("Sample names in feature and metadata table are NOT the same!")
+    except ValueError as e:
+        st.warning(f"Sample names cannot be compared. Error: {e}")
+        return None, None
+
+    # Normalize feature data (handling division by zero)
+    normalized = feature_df.apply(lambda x: x / np.sum(x) if np.sum(x) != 0 else 0, axis=1)
+    
+    # Return a copy to avoid caching issues with mutable objects
+    return md_samples.copy(), normalized.copy()
+
 # can not hash pcoa
 def permanova_pcoa(scaled, distance_matrix, attribute):
     # Scale the data
@@ -168,7 +203,6 @@ def get_pcoa_scatter_plot(pcoa, md_samples, attribute):
         yaxis_title=f"PC2 {round(pcoa.proportion_explained[1]*100, 1)}%",
     )
     return fig
-
 
 # can not hash pcoa
 def get_pcoa_variance_plot(pcoa):

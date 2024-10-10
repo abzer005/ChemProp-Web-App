@@ -6,7 +6,7 @@ from src.cleanup import *
 import pandas as pd
 import numpy as np
 
-st.markdown("## Blank removal")
+st.markdown("## Data Cleanup")
 
 # Check if the data is available in the session state
 if 'ft' in st.session_state and 'md' in st.session_state:
@@ -93,7 +93,34 @@ if 'ft' in st.session_state and 'md' in st.session_state:
 
          else:
              st.warning("You selected everything as sample type. Blank removal is not possible.")
+        
+    if 'ft_for_analysis' in st.session_state and not st.session_state['ft_for_analysis'].empty:
+        cutoff_LOD = get_cutoff_LOD(st.session_state['ft_for_analysis'])
 
+    imputation = st.checkbox("Impute missing values?", 
+                             False, 
+                             help=f"These values will be filled with random number between 1 and {cutoff_LOD} (Limit of Detection) during imputation.")
+    if imputation:
+        if cutoff_LOD > 1:
+            imputed_ft = impute_missing_values(st.session_state['ft_for_analysis'], cutoff_LOD)
+            with st.expander(f"Imputed data - features: {imputed_ft.shape[0]}, samples: {imputed_ft.shape[1]}"):
+                st.dataframe(imputed_ft)
+            
+            st.session_state['ft_for_analysis'] = imputed_ft
+
+        else:
+            st.warning(f"Can't impute with random values between 1 and lowest value, which is {cutoff_LOD} (rounded).")
+
+    perform_normalization = st.checkbox("Perform TIC normalization?", False)
+    if perform_normalization:
+        normalized_md, normalized_ft = normalization(st.session_state['ft_for_analysis'], 
+                                                     st.session_state['md_for_analysis'])
+        normalized_ft = normalized_ft.T
+        
+        with st.expander(f"Normalized data - features: {normalized_ft.shape[0]}, samples: {normalized_ft.shape[1]}"):
+            st.dataframe(normalized_ft)
+            
+        st.session_state['ft_for_analysis'] = normalized_ft
 else:
     # If data is not available, display a message
     st.warning("Data not loaded. Please go back and load the data first.")
@@ -111,28 +138,3 @@ st.markdown("""
     explore our <a href="https://fbmn-statsguide.gnps2.org/" target="_blank"><b>FBMN-STATS webpage</b></a>.
     </div>
     """, unsafe_allow_html=True)
-
-# Displaying Dataframes in Sidebar
-with st.sidebar:
-    st.write("## Uploaded Data Overview")
-
-    # Create lists for dataframe information
-    df_names = []
-    df_dimensions = []
-
-    # Iterate over session state items
-    for df_name in st.session_state.keys():
-        # Check if the item is a DataFrame
-        if isinstance(st.session_state[df_name], pd.DataFrame):
-            df = st.session_state[df_name]
-            df_names.append(df_name)
-            df_dimensions.append(f"{df.shape}")
-
-    # Display the table if there are dataframes
-    if df_names:
-        # Convert lists to pandas DataFrame for display
-        df_table = pd.DataFrame({
-            'Dataframe': df_names,
-            'Dimensions (rows x cols)': df_dimensions
-        })
-        st.table(df_table)

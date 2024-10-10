@@ -15,14 +15,14 @@ st.subheader("🚧 Under Construction 🚧")
 st.subheader('What is ChemProp2 Used For?')
 st.write("""
          ChemProp2 is a tool developed to address a key challenge in non-targeted metabolomics using liquid chromatography-tandem mass spectrometry (LC–MS/MS), 
-         particularly in the study of biotransformation sudies like drug metabolism as well as xenobiotic and natural product biotransformation in the environment. 
+         particularly in the study of biotransformation studies like drug metabolism as well as xenobiotic and natural product biotransformation in the environment. 
         
          Analyzing and annotating the vast data from metabolomic studies still remains a challenge. Various in silico methods and spectral similarity metrics have been developed to tackle this issue. 
          Tools like GNPS (now GNPS2) use Feature-based Molecular Networking (FBMN) to create molecular networks by connecting metabolites with similar MS/MS spectral profiles. 
          ChemProp2 builds on this, identifying potential biotransformations within these networks. It detects anti-correlating metabolites and putatibve reaction pairs, scoring their correlation over time or space. 
          This helps in prioritizing and visualizing biochemical alterations within the network.
         
-         ChemProp2 is particularly useful when dealing with more than two sequential data points. Go to the module ChemProp1 for studies with only two data points. [To read more about this:](https://doi.org/10.1021/acs.analchem.1c01520)""")
+         ChemProp2 is particularly useful when dealing with more than two sequential data points. Go to the module ChemProp1 for studies with only two data points. [To read more about this](https://doi.org/10.1021/acs.analchem.1c01520)""")
 
 # Input Files
 st.subheader('Input File Requirements')
@@ -56,7 +56,13 @@ st.write("""
 # Citation and Resources
 st.subheader('Citation and Further Resources')
 st.write('If you use ChemProp2 in your research, please cite: ....')
-st.write('* [FBMN-STATS](https://fbmn-statsguide.gnps2.org/) - A statistical pipeline for downstream processing of FBMN results.')
+st.markdown("""
+            * [FBMN-STATS](https://fbmn-statsguide.gnps2.org/) - A statistical pipeline for downstream processing of FBMN results.
+            * Pakkir Shah, A.K., Walter, A., Ottosson, F. et al. Statistical analysis of feature-based molecular networking results from non-targeted metabolomics data. Nat Protoc (2024). https://doi.org/10.1038/s41596-024-01046-3
+            """
+            )
+            
+
 # Add more links as needed
 
 # Feedback Section
@@ -73,7 +79,6 @@ st.subheader("Contribute and Follow Us")
 st.markdown("""
 - Interested in contributing? Check out our [GitHub personal page](https://github.com/abzer005).
 - For more about our work, visit our [lab's GitHub page](https://github.com/Functional-Metabolomics-Lab).
-- Follow us on [Twitter](https://twitter.com/Functional-Metabolomics-Lab) for the latest updates.
 """)
 
 # Optional: Footer

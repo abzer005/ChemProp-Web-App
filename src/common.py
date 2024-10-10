@@ -14,11 +14,21 @@ def reset_dataframes():
         st.session_state[key] = pd.DataFrame()
 
 
+
+def clear_cache_button():
+   if st.button("Clear Cache"):
+        # Clear cache for both newer and older Streamlit versions
+        if hasattr(st, "cache_data"):
+            st.cache_data.clear()
+        if hasattr(st, "cache_resource"):
+            st.cache_resource.clear()
+        st.success("Cache cleared!")
+
 def page_setup():
     # streamlit configs
     st.set_page_config(
         page_title="ChemProp2",
-        page_icon="⬆️⬇️", 
+        page_icon="assets/chemprop_icon.png",
         layout="wide",
         initial_sidebar_state="auto",
         menu_items=None,
@@ -38,6 +48,9 @@ def page_setup():
                 ["svg", "png", "jpeg", "webp"],
                 key="image_format",
             )
+        v_space(1)
+        # Add the clear cache button
+        clear_cache_button()
         v_space(1)
         st.image("https://raw.githubusercontent.com/abzer005/ChemProp2/main/streamlit/assets/ChemProp2.png", use_column_width=True)
 
@@ -72,7 +85,6 @@ def open_df(file):
         return df
     except:
         return pd.DataFrame()
-
 
 def show_table(df, title="", col="", download=True):
     if col:

@@ -30,7 +30,7 @@ elif input_method == "Use Example Dataset":
     
     load_example()  # Load data into session state
 
-    for file_name, key in zip(["Feature Matrix", "MetaData", "Network Node Pairs", "GNPS Annotations"],
+    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
                               ['ft', 'md', 'nw', 'an_gnps']):
         display_dataframe_with_toggle(key, file_name)
 
@@ -49,8 +49,8 @@ if input_method == "Manual Input":
     col1, col2 = st.columns(2)
     with col1:
         ft_file = st.file_uploader("Upload Feature Table", 
-                                    type=["csv", "xlsx", "txt", "tsv"],
-                                    help = "This table is a key output of LC-MS/MS metabolomics studies. The table presents a list of mass spectral features along with their relative intensities (represented by its integrated peak area) observed across various samples.")
+                                   type=["csv", "xlsx", "txt", "tsv"],
+                                   help = "This table is a key output of LC-MS/MS metabolomics studies. The table presents a list of mass spectral features along with their relative intensities (represented by its integrated peak area) observed across various samples.")
         if ft_file:
             st.session_state['ft'] = load_ft(ft_file)
 
@@ -64,7 +64,7 @@ if input_method == "Manual Input":
     # Create 2 columns for the nw, annotation file uploaders
     col3, col4 = st.columns(2)
     with col3:
-        network_file = st.file_uploader("Upload Network Edge File from FBMN", 
+        network_file = st.file_uploader("Upload Edge File from FBMN", 
                                         type=["csv", "xlsx", "txt", "tsv"],
                                         help = "This file maps connections between node pairs in a metabolomic network. Each row represents a node pair, identified by Cluster IDs 1 and 2, corresponding to features in the quantification table. The file includes parameters like cosine score and mz difference, which could be used as edge connecting the nodes.")
         if network_file:
@@ -77,7 +77,7 @@ if input_method == "Manual Input":
 
     # Display headers and 'View all' buttons for each file
     for key, label in zip(['ft', 'md', 'nw', 'an_gnps'],
-                          ["Feature Table", "Metadata", "Network Edge File", "Annotation Information File"]):
+                          ["Feature Table", "Metadata", "Edge Table", "Annotation Information File"]):
         
         if key in st.session_state and st.session_state[key] is not None:
             df = st.session_state[key]
@@ -89,28 +89,3 @@ if input_method == "Manual Input":
                 st.dataframe(df)
             else:
                 st.dataframe(df.head())
-
-# Displaying Dataframes in Sidebar
-with st.sidebar:
-    st.write("## Uploaded Data Overview")
-
-    # Create lists for dataframe information
-    df_names = []
-    df_dimensions = []
-
-    # Iterate over session state items
-    for df_name in st.session_state.keys():
-        # Check if the item is a DataFrame
-        if isinstance(st.session_state[df_name], pd.DataFrame):
-            df = st.session_state[df_name]
-            df_names.append(df_name)
-            df_dimensions.append(f"{df.shape[0]} rows × {df.shape[1]} columns")
-
-    # Display the table if there are dataframes
-    if df_names:
-        # Convert lists to pandas DataFrame for display
-        df_table = pd.DataFrame({
-            'Dataframe': df_names,
-            'Dimensions': df_dimensions
-        })
-        st.table(df_table)

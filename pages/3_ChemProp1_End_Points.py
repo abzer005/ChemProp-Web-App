@@ -4,8 +4,8 @@ from src.chemprop1_helpers import *
 import pandas as pd
 import numpy as np
 
-st.markdown("### Under construction")
-st.markdown("## ChemProp1 Analysis")
+st.markdown("## Under construction")
+st.markdown("### ChemProp1 Analysis")
 
 st.markdown("""
 **Instructions:** 
@@ -54,32 +54,7 @@ if 'md_for_analysis' in st.session_state and not st.session_state['md_for_analys
 else:
     st.warning("Metadata not loaded. Please load the metadata first.")
 
-# To apply subsetting
-if 'chemprop_md' in st.session_state and 'ft_for_analysis' in st.session_state:
-    subset_md_before = st.session_state.chemprop_md.copy()
-    subset_ft_before = st.session_state.ft_for_analysis.copy()
-    
-    # Troubleshooting
-    #with st.expander(f"Metadata {subset_md_before.shape}"):
-    #    st.dataframe(subset_md_before)
-    #with st.expander(f"Feature table {subset_ft_before.shape}"):
-    #    st.dataframe(subset_ft_before)
-
-    subset_md = st.checkbox("Subset Metadata?", False)
-
-    if subset_md:
-        st.session_state['subset_md_after'], st.session_state['subset_ft_after'] = subset_levels(subset_md_before, subset_ft_before)
-        st.success("Metadata and feature table have been subsetted.")
-    else:
-        st.warning("No subsetting applied. Using original data.")
-        with st.expander(f"Metadata {subset_md_before.shape}"):
-            st.dataframe(subset_md_before)
-        
-        with st.expander(f"Feature table {subset_ft_before.shape}"):
-            st.dataframe(subset_ft_before)
-else:
-    st.warning("Feature table or metadata not available for analysis.")
-
+subset_md = st.checkbox("Subset Metadata?", False)
 
 # Check if the required data is available in the session state
 if 'ft_for_analysis' in st.session_state and 'chemprop_md' in st.session_state and 'nw' in st.session_state:
@@ -107,29 +82,3 @@ if 'ft_for_analysis' in st.session_state and 'chemprop_md' in st.session_state a
             # Code for creating and displaying scatter plot goes here
 else:
     st.warning("Required data for analysis is not loaded. Please check your dataset.")
-
-# Displaying Dataframes in Sidebar
-with st.sidebar:
-    st.write("## Uploaded Data Overview")
-
-    # Create lists for dataframe information
-    df_names = []
-    df_dimensions = []
-
-    # Iterate over session state items
-    for df_name in st.session_state.keys():
-        # Check if the item is a DataFrame
-        if isinstance(st.session_state[df_name], pd.DataFrame):
-            df = st.session_state[df_name]
-            df_names.append(df_name)
-            df_dimensions.append(f"{df.shape}")
-
-    # Display the table if there are dataframes
-    if df_names:
-        # Convert lists to pandas DataFrame for display
-        df_table = pd.DataFrame({
-            'Dataframe': df_names,
-            'Dimensions (rows x cols)': df_dimensions
-        })
-        st.table(df_table)
-
