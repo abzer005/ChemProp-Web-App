@@ -33,88 +33,88 @@ T7_DMSO_Bac_rep3.mzML Peak area	DMSO	T7	DMSO with Bacteria	Rep 3
 T8_DMSO_Bac_rep1.mzML Peak area	DMSO	T8	DMSO with Bacteria	Rep 1
 T8_DMSO_Bac_rep2.mzML Peak area	DMSO	T8	DMSO with Bacteria	Rep 2
 T8_DMSO_Bac_rep3.mzML Peak area	DMSO	T8	DMSO with Bacteria	Rep 3
-T0_Medium_noBac_rep1.mzML Peak area	Medium	T0	Media without Bacteria	Rep 1
-T0_Medium_noBac_rep2.mzML Peak area	Medium	T0	Media without Bacteria	Rep 2
-T0_Medium_noBac_rep3.mzML Peak area	Medium	T0	Media without Bacteria	Rep 3
-T1_Medium_noBac_rep1.mzML Peak area	Medium	T1	Media without Bacteria	Rep 1
-T1_Medium_noBac_rep2.mzML Peak area	Medium	T1	Media without Bacteria	Rep 2
-T1_Medium_noBac_rep3.mzML Peak area	Medium	T1	Media without Bacteria	Rep 3
-T2_Medium_noBac_rep1.mzML Peak area	Medium	T2	Media without Bacteria	Rep 1
-T2_Medium_noBac_rep2.mzML Peak area	Medium	T2	Media without Bacteria	Rep 2
-T2_Medium_noBac_rep3.mzML Peak area	Medium	T2	Media without Bacteria	Rep 3
-T3_Medium_noBac_rep1.mzML Peak area	Medium	T3	Media without Bacteria	Rep 1
-T3_Medium_noBac_rep2.mzML Peak area	Medium	T3	Media without Bacteria	Rep 2
-T3_Medium_noBac_rep3.mzML Peak area	Medium	T3	Media without Bacteria	Rep 3
-T4_Medium_noBac_rep1.mzML Peak area	Medium	T4	Media without Bacteria	Rep 1
-T4_Medium_noBac_rep2.mzML Peak area	Medium	T4	Media without Bacteria	Rep 2
-T4_Medium_noBac_rep3.mzML Peak area	Medium	T4	Media without Bacteria	Rep 3
-T5_Medium_noBac_rep1.mzML Peak area	Medium	T5	Media without Bacteria	Rep 1
-T5_Medium_noBac_rep2.mzML Peak area	Medium	T5	Media without Bacteria	Rep 2
-T5_Medium_noBac_rep3.mzML Peak area	Medium	T5	Media without Bacteria	Rep 3
-T6_Medium_noBac_rep1.mzML Peak area	Medium	T6	Media without Bacteria	Rep 1
-T6_Medium_noBac_rep2.mzML Peak area	Medium	T6	Media without Bacteria	Rep 2
-T6_Medium_noBac_rep3.mzML Peak area	Medium	T6	Media without Bacteria	Rep 3
-T7_Medium_noBac.mzML Peak area	Medium	T7	Media without Bacteria	Rep 1
-T7_Medium_noBac_20240705172750.mzML Peak area	Medium	T7	Media without Bacteria	Rep 2
-T7_Medium_noBac_20240705211416 - Copy.mzML Peak area	Medium	T7	Media without Bacteria	Rep 3
-T7_Medium_noBac_20240705211416.mzML Peak area	Medium	T7	Media without Bacteria	Rep 3
-T8_Medium_noBac_rep1.mzML Peak area	Medium	T8	Media without Bacteria	Rep 1
-T8_Medium_noBac_rep2.mzML Peak area	Medium	T8	Media without Bacteria	Rep 2
-T8_Medium_noBac_rep3.mzML Peak area	Medium	T8	Media without Bacteria	Rep 3
-T0_Metro_Bac_rep1.mzML Peak area	Metronidazole	T0	Bacteria	Rep 1
-T0_Metro_Bac_rep2.mzML Peak area	Metronidazole	T0	Bacteria	Rep 2
-T0_Metro_Bac_rep3.mzML Peak area	Metronidazole	T0	Bacteria	Rep 3
-T0_Metro_noBac_rep1.mzML Peak area	Metronidazole	T0	Without Bacteria	Rep 1
-T0_Metro_noBac_rep2.mzML Peak area	Metronidazole	T0	Without Bacteria	Rep 2
-T0_Metro_noBac_rep3.mzML Peak area	Metronidazole	T0	Without Bacteria	Rep 3
-T1_Metro_Bac_rep1.mzML Peak area	Metronidazole	T1	Bacteria	Rep 1
-T1_Metro_Bac_rep2.mzML Peak area	Metronidazole	T1	Bacteria	Rep 2
-T1_Metro_Bac_rep3.mzML Peak area	Metronidazole	T1	Bacteria	Rep 3
-T1_Metro_noBac_rep1.mzML Peak area	Metronidazole	T1	Without Bacteria	Rep 1
-T1_Metro_noBac_rep2.mzML Peak area	Metronidazole	T1	Without Bacteria	Rep 2
-T1_Metro_noBac_rep3.mzML Peak area	Metronidazole	T1	Without Bacteria	Rep 3
-T2_Metro_Bac_rep1.mzML Peak area	Metronidazole	T2	Bacteria	Rep 1
-T2_Metro_Bac_rep2.mzML Peak area	Metronidazole	T2	Bacteria	Rep 2
-T2_Metro_Bac_rep3.mzML Peak area	Metronidazole	T2	Bacteria	Rep 3
-T2_Metro_noBac_rep1.mzML Peak area	Metronidazole	T2	Without Bacteria	Rep 1
-T2_Metro_noBac_rep2.mzML Peak area	Metronidazole	T2	Without Bacteria	Rep 2
-T2_Metro_noBac_rep3.mzML Peak area	Metronidazole	T2	Without Bacteria	Rep 3
-T3_Metro_Bac_rep1.mzML Peak area	Metronidazole	T3	Bacteria	Rep 1
-T3_Metro_Bac_rep2.mzML Peak area	Metronidazole	T3	Bacteria	Rep 2
-T3_Metro_Bac_rep3.mzML Peak area	Metronidazole	T3	Bacteria	Rep 3
-T3_Metro_noBac_rep1.mzML Peak area	Metronidazole	T3	Without Bacteria	Rep 1
-T3_Metro_noBac_rep2.mzML Peak area	Metronidazole	T3	Without Bacteria	Rep 2
-T3_Metro_noBac_rep3.mzML Peak area	Metronidazole	T3	Without Bacteria	Rep 3
-T4_Metro_Bac_rep1.mzML Peak area	Metronidazole	T4	Bacteria	Rep 1
-T4_Metro_Bac_rep2.mzML Peak area	Metronidazole	T4	Bacteria	Rep 2
-T4_Metro_Bac_rep3.mzML Peak area	Metronidazole	T4	Bacteria	Rep 3
-T4_Metro_noBac_rep1.mzML Peak area	Metronidazole	T4	Without Bacteria	Rep 1
-T4_Metro_noBac_rep2.mzML Peak area	Metronidazole	T4	Without Bacteria	Rep 2
-T4_Metro_noBac_rep3.mzML Peak area	Metronidazole	T4	Without Bacteria	Rep 3
-T5_Metro_Bac_rep1.mzML Peak area	Metronidazole	T5	Bacteria	Rep 1
-T5_Metro_Bac_rep2.mzML Peak area	Metronidazole	T5	Bacteria	Rep 2
-T5_Metro_Bac_rep3.mzML Peak area	Metronidazole	T5	Bacteria	Rep 3
-T5_Metro_noBac_rep1.mzML Peak area	Metronidazole	T5	Without Bacteria	Rep 1
-T5_Metro_noBac_rep2.mzML Peak area	Metronidazole	T5	Without Bacteria	Rep 2
-T5_Metro_noBac_rep3.mzML Peak area	Metronidazole	T5	Without Bacteria	Rep 3
-T6_Metro_Bac_rep1.mzML Peak area	Metronidazole	T6	Bacteria	Rep 1
-T6_Metro_Bac_rep2.mzML Peak area	Metronidazole	T6	Bacteria	Rep 2
-T6_Metro_Bac_rep3.mzML Peak area	Metronidazole	T6	Bacteria	Rep 3
-T6_Metro_noBac_rep1.mzML Peak area	Metronidazole	T6	Without Bacteria	Rep 1
-T6_Metro_noBac_rep2.mzML Peak area	Metronidazole	T6	Without Bacteria	Rep 2
-T6_Metro_noBac_rep3.mzML Peak area	Metronidazole	T6	Without Bacteria	Rep 3
-T7_Metro_Bac_rep1.mzML Peak area	Metronidazole	T7	Bacteria	Rep 1
-T7_Metro_Bac_rep2.mzML Peak area	Metronidazole	T7	Bacteria	Rep 2
-T7_Metro_Bac_rep3.mzML Peak area	Metronidazole	T7	Bacteria	Rep 3
-T7_Metro_noBac_rep1.mzML Peak area	Metronidazole	T7	Without Bacteria	Rep 1
-T7_Metro_noBac_rep2.mzML Peak area	Metronidazole	T7	Without Bacteria	Rep 2
-T7_Metro_noBac_rep3.mzML Peak area	Metronidazole	T7	Without Bacteria	Rep 3
-T8_Metro_Bac_rep1.mzML Peak area	Metronidazole	T8	Bacteria	Rep 1
-T8_Metro_Bac_rep2.mzML Peak area	Metronidazole	T8	Bacteria	Rep 2
-T8_Metro_Bac_rep3.mzML Peak area	Metronidazole	T8	Bacteria	Rep 3
-T8_Metro_noBac_rep1.mzML Peak area	Metronidazole	T8	Without Bacteria	Rep 1
-T8_Metro_noBac_rep2.mzML Peak area	Metronidazole	T8	Without Bacteria	Rep 2
-T8_Metro_noBac_rep3.mzML Peak area	Metronidazole	T8	Without Bacteria	Rep 3
+T0_Medium_noBac_rep1.mzML Peak area	Medium	T0	Medium	Rep 1
+T0_Medium_noBac_rep2.mzML Peak area	Medium	T0	Medium	Rep 2
+T0_Medium_noBac_rep3.mzML Peak area	Medium	T0	Medium	Rep 3
+T1_Medium_noBac_rep1.mzML Peak area	Medium	T1	Medium	Rep 1
+T1_Medium_noBac_rep2.mzML Peak area	Medium	T1	Medium	Rep 2
+T1_Medium_noBac_rep3.mzML Peak area	Medium	T1	Medium	Rep 3
+T2_Medium_noBac_rep1.mzML Peak area	Medium	T2	Medium	Rep 1
+T2_Medium_noBac_rep2.mzML Peak area	Medium	T2	Medium	Rep 2
+T2_Medium_noBac_rep3.mzML Peak area	Medium	T2	Medium	Rep 3
+T3_Medium_noBac_rep1.mzML Peak area	Medium	T3	Medium	Rep 1
+T3_Medium_noBac_rep2.mzML Peak area	Medium	T3	Medium	Rep 2
+T3_Medium_noBac_rep3.mzML Peak area	Medium	T3	Medium	Rep 3
+T4_Medium_noBac_rep1.mzML Peak area	Medium	T4	Medium	Rep 1
+T4_Medium_noBac_rep2.mzML Peak area	Medium	T4	Medium	Rep 2
+T4_Medium_noBac_rep3.mzML Peak area	Medium	T4	Medium	Rep 3
+T5_Medium_noBac_rep1.mzML Peak area	Medium	T5	Medium	Rep 1
+T5_Medium_noBac_rep2.mzML Peak area	Medium	T5	Medium	Rep 2
+T5_Medium_noBac_rep3.mzML Peak area	Medium	T5	Medium	Rep 3
+T6_Medium_noBac_rep1.mzML Peak area	Medium	T6	Medium	Rep 1
+T6_Medium_noBac_rep2.mzML Peak area	Medium	T6	Medium	Rep 2
+T6_Medium_noBac_rep3.mzML Peak area	Medium	T6	Medium	Rep 3
+T7_Medium_noBac.mzML Peak area	Medium	T7	Medium	Rep 1
+T7_Medium_noBac_20240705172750.mzML Peak area	Medium	T7	Medium	Rep 2
+T7_Medium_noBac_20240705211416 - Copy.mzML Peak area	Medium	T7	Medium	Rep 3
+T7_Medium_noBac_20240705211416.mzML Peak area	Medium	T7	Medium	Rep 3
+T8_Medium_noBac_rep1.mzML Peak area	Medium	T8	Medium	Rep 1
+T8_Medium_noBac_rep2.mzML Peak area	Medium	T8	Medium	Rep 2
+T8_Medium_noBac_rep3.mzML Peak area	Medium	T8	Medium	Rep 3
+T0_Compound_Bac_rep1.mzML Peak area	Drug	T0	Treatment	Rep 1
+T0_Compound_Bac_rep2.mzML Peak area	Drug	T0	Treatment	Rep 2
+T0_Compound_Bac_rep3.mzML Peak area	Drug	T0	Treatment	Rep 3
+T0_Compound_noBac_rep1.mzML Peak area	Drug	T0	Abiotic Control	Rep 1
+T0_Compound_noBac_rep2.mzML Peak area	Drug	T0	Abiotic Control	Rep 2
+T0_Compound_noBac_rep3.mzML Peak area	Drug	T0	Abiotic Control	Rep 3
+T1_Compound_Bac_rep1.mzML Peak area	Drug	T1	Treatment	Rep 1
+T1_Compound_Bac_rep2.mzML Peak area	Drug	T1	Treatment	Rep 2
+T1_Compound_Bac_rep3.mzML Peak area	Drug	T1	Treatment	Rep 3
+T1_Compound_noBac_rep1.mzML Peak area	Drug	T1	Abiotic Control	Rep 1
+T1_Compound_noBac_rep2.mzML Peak area	Drug	T1	Abiotic Control	Rep 2
+T1_Compound_noBac_rep3.mzML Peak area	Drug	T1	Abiotic Control	Rep 3
+T2_Compound_Bac_rep1.mzML Peak area	Drug	T2	Treatment	Rep 1
+T2_Compound_Bac_rep2.mzML Peak area	Drug	T2	Treatment	Rep 2
+T2_Compound_Bac_rep3.mzML Peak area	Drug	T2	Treatment	Rep 3
+T2_Compound_noBac_rep1.mzML Peak area	Drug	T2	Abiotic Control	Rep 1
+T2_Compound_noBac_rep2.mzML Peak area	Drug	T2	Abiotic Control	Rep 2
+T2_Compound_noBac_rep3.mzML Peak area	Drug	T2	Abiotic Control	Rep 3
+T3_Compound_Bac_rep1.mzML Peak area	Drug	T3	Treatment	Rep 1
+T3_Compound_Bac_rep2.mzML Peak area	Drug	T3	Treatment	Rep 2
+T3_Compound_Bac_rep3.mzML Peak area	Drug	T3	Treatment	Rep 3
+T3_Compound_noBac_rep1.mzML Peak area	Drug	T3	Abiotic Control	Rep 1
+T3_Compound_noBac_rep2.mzML Peak area	Drug	T3	Abiotic Control	Rep 2
+T3_Compound_noBac_rep3.mzML Peak area	Drug	T3	Abiotic Control	Rep 3
+T4_Compound_Bac_rep1.mzML Peak area	Drug	T4	Treatment	Rep 1
+T4_Compound_Bac_rep2.mzML Peak area	Drug	T4	Treatment	Rep 2
+T4_Compound_Bac_rep3.mzML Peak area	Drug	T4	Treatment	Rep 3
+T4_Compound_noBac_rep1.mzML Peak area	Drug	T4	Abiotic Control	Rep 1
+T4_Compound_noBac_rep2.mzML Peak area	Drug	T4	Abiotic Control	Rep 2
+T4_Compound_noBac_rep3.mzML Peak area	Drug	T4	Abiotic Control	Rep 3
+T5_Compound_Bac_rep1.mzML Peak area	Drug	T5	Treatment	Rep 1
+T5_Compound_Bac_rep2.mzML Peak area	Drug	T5	Treatment	Rep 2
+T5_Compound_Bac_rep3.mzML Peak area	Drug	T5	Treatment	Rep 3
+T5_Compound_noBac_rep1.mzML Peak area	Drug	T5	Abiotic Control	Rep 1
+T5_Compound_noBac_rep2.mzML Peak area	Drug	T5	Abiotic Control	Rep 2
+T5_Compound_noBac_rep3.mzML Peak area	Drug	T5	Abiotic Control	Rep 3
+T6_Compound_Bac_rep1.mzML Peak area	Drug	T6	Treatment	Rep 1
+T6_Compound_Bac_rep2.mzML Peak area	Drug	T6	Treatment	Rep 2
+T6_Compound_Bac_rep3.mzML Peak area	Drug	T6	Treatment	Rep 3
+T6_Compound_noBac_rep1.mzML Peak area	Drug	T6	Abiotic Control	Rep 1
+T6_Compound_noBac_rep2.mzML Peak area	Drug	T6	Abiotic Control	Rep 2
+T6_Compound_noBac_rep3.mzML Peak area	Drug	T6	Abiotic Control	Rep 3
+T7_Compound_Bac_rep1.mzML Peak area	Drug	T7	Treatment	Rep 1
+T7_Compound_Bac_rep2.mzML Peak area	Drug	T7	Treatment	Rep 2
+T7_Compound_Bac_rep3.mzML Peak area	Drug	T7	Treatment	Rep 3
+T7_Compound_noBac_rep1.mzML Peak area	Drug	T7	Abiotic Control	Rep 1
+T7_Compound_noBac_rep2.mzML Peak area	Drug	T7	Abiotic Control	Rep 2
+T7_Compound_noBac_rep3.mzML Peak area	Drug	T7	Abiotic Control	Rep 3
+T8_Compound_Bac_rep1.mzML Peak area	Drug	T8	Treatment	Rep 1
+T8_Compound_Bac_rep2.mzML Peak area	Drug	T8	Treatment	Rep 2
+T8_Compound_Bac_rep3.mzML Peak area	Drug	T8	Treatment	Rep 3
+T8_Compound_noBac_rep1.mzML Peak area	Drug	T8	Abiotic Control	Rep 1
+T8_Compound_noBac_rep2.mzML Peak area	Drug	T8	Abiotic Control	Rep 2
+T8_Compound_noBac_rep3.mzML Peak area	Drug	T8	Abiotic Control	Rep 3
 Polled_QC_17.mzML Peak area	Pooled QC	Pooled QC	Pooled QC	Pooled QC
 Polled_Qcs_1.mzML Peak area	Pooled QC	Pooled QC	Pooled QC	Pooled QC
 Polled_Qcs_2.mzML Peak area	Pooled QC	Pooled QC	Pooled QC	Pooled QC
