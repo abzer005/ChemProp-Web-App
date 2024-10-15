@@ -10,5 +10,3 @@ scipy  # Required for spearmanr, pearsonr, and distance
 scikit-learn  # Required for StandardScaler
 #setuptools>=68.0.0
 #wheel>=0.38.4
-pip>=24.2  # Ensures the latest pip is used
-
