@@ -1,0 +1,24 @@
+version: '3'
+services:
+  ChemProp-Web-App-streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ChemProp-Web-App-streamlit
+    volumes:
+      - ./logs:/app/logs:rw
+    networks:
+      - default
+      - nginx-net
+    restart: unless-stopped
+    command: /app/run_server.sh
+    environment:
+      VIRTUAL_HOST: chemprop.gnps2.org
+      VIRTUAL_PORT: 5000
+      LETSENCRYPT_HOST: chemprop.gnps2.org
+      LETSENCRYPT_EMAIL: mwang87@gmail.com
+
+networks:
+  nginx-net:
+    external:
+      name: nginx-net

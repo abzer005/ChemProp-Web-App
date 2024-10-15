@@ -4,6 +4,7 @@ pandas
 plotly
 openpyxl
 scikit-posthocs
+requests
 scikit-bio
 scipy  # Required for spearmanr, pearsonr, and distance
 scikit-learn  # Required for StandardScaler
