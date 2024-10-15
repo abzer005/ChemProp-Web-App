@@ -11,7 +11,9 @@ st.markdown("### Please select your method for data input below.")
 input_method = st.selectbox("Select Input Method", 
                             ["Use Example Dataset",
                              "Manual Input"
-                             ])
+                             ],
+                             index=0  # This sets "Use Example Dataset" as the default option
+                             )
 
 # Clearing the session state 
 if 'last_input_method' not in st.session_state:
