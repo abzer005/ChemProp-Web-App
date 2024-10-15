@@ -35,12 +35,11 @@ jobs:
     - name: Create ChemProp2.bat file
       run: |
         echo '@echo off' > ChemProp2.bat
-        echo '.\\python-${{ env.PYTHON_VERSION }}\\python -m streamlit run app_homepage.py' >> ChemProp2.bat
+        echo 'python -m streamlit run app_homepage.py' >> ChemProp2.bat
 
     - name: Create All-in-one executable folder
       run: |
         mkdir streamlit_exe
-        mv python-${{ env.PYTHON_VERSION }} streamlit_exe
         mv ChemProp2.bat streamlit_exe
         cp -r src streamlit_exe
         cp -r pages streamlit_exe
