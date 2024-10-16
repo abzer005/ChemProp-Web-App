@@ -1,6 +1,11 @@
 import streamlit as st
 from src.common import *
 
+from streamlit.components.v1 import html
+
+# Add a tracking token
+html('<script async defer data-website-id="74bc9983-13c4-4da0-89ae-b78209c13aaf" src="https://analytics.gnps2.org/umami.js"></script>', width=0, height=0)
+
 page_setup()
 
 # Page Header
