@@ -1,5 +1,5 @@
 version: '3'
 services:
-  chemProp-web-app-streamlit:
+  chemprop-web-app-streamlit:
     ports:
     - "5000:5000"

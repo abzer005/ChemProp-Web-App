@@ -1,10 +1,10 @@
 version: '3'
 services:
-  chemProp-web-app-streamlit:
+  chemprop-web-app-streamlit:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: chemProp-web-app-streamlit
+    container_name: chemprop-web-app-streamlit
     volumes:
       - ./logs:/app/logs:rw
     networks:
