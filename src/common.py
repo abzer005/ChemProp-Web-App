@@ -3,6 +3,16 @@ import pandas as pd
 import io
 import uuid
 
+def page_setup():
+    # streamlit configs
+    st.set_page_config(
+        page_title="ChemProp2",
+        page_icon="assets/chemprop_icon.png",
+        layout="wide",
+        initial_sidebar_state="auto",
+        menu_items=None
+    )
+
 dataframe_names = ("md",
                    "ft",
                    "nw",
@@ -24,15 +34,6 @@ def clear_cache_button():
             st.cache_resource.clear()
         st.success("Cache cleared!")
 
-def page_setup():
-    # streamlit configs
-    st.set_page_config(
-        page_title="ChemProp2",
-        page_icon="assets/chemprop_icon.png",
-        layout="wide",
-        initial_sidebar_state="auto",
-        menu_items=None,
-    )
     # initialize global session state variables if not already present
     # DataFrames
     for key in dataframe_names:
