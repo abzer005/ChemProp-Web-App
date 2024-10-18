@@ -35,7 +35,7 @@ jobs:
     - name: Create ChemProp2.bat file
       run: |
         echo '@echo off' > ChemProp2.bat
-        echo 'python -m streamlit run app_homepage.py' >> ChemProp2.bat
+        echo 'python -m streamlit run Home.py' >> ChemProp2.bat
 
     - name: Create All-in-one executable folder
       run: |
@@ -46,7 +46,7 @@ jobs:
         cp -r assets streamlit_exe
         cp -r example-data streamlit_exe
         cp -r .streamlit streamlit_exe
-        cp app_homepage.py streamlit_exe
+        cp Home.py streamlit_exe
 
     - name: Compress streamlit_exe folder to ChemProp2.zip
       run: |
