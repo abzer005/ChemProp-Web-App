@@ -3,28 +3,6 @@ import pandas as pd
 import io
 import uuid
 
-def page_setup():
-    # streamlit configs
-    st.set_page_config(
-        page_title="ChemProp2",
-        page_icon="assets/chemprop_icon.png",
-        layout="wide",
-        initial_sidebar_state="auto",
-        menu_items=None
-    )
-
-dataframe_names = ("md",
-                   "ft",
-                   "nw",
-                   "an_gnps",
-                   "an_analog")
-
-def reset_dataframes():
-    for key in dataframe_names:
-        st.session_state[key] = pd.DataFrame()
-
-
-
 def clear_cache_button():
    if st.button("Clear Cache"):
         # Clear cache for both newer and older Streamlit versions
@@ -36,6 +14,23 @@ def clear_cache_button():
 
     # initialize global session state variables if not already present
     # DataFrames
+
+def v_space(n, col=None):
+    for _ in range(n):
+        if col:
+            col.write("")
+        else:
+            st.write("")
+
+def page_setup():
+    # streamlit configs
+    st.set_page_config(
+        page_title="ChemProp2",
+        page_icon="assets/chemprop_icon.png",
+        layout="wide",
+        initial_sidebar_state="auto",
+        menu_items=None,
+    )
     for key in dataframe_names:
         if key not in st.session_state:
             st.session_state[key] = pd.DataFrame()
@@ -53,15 +48,21 @@ def clear_cache_button():
         # Add the clear cache button
         clear_cache_button()
         v_space(1)
+        
         st.image("https://raw.githubusercontent.com/abzer005/ChemProp2/main/streamlit/assets/ChemProp2.png", use_column_width=True)
 
 
-def v_space(n, col=None):
-    for _ in range(n):
-        if col:
-            col.write("")
-        else:
-            st.write("")
+dataframe_names = ("md",
+                   "ft",
+                   "nw",
+                   "an_gnps",
+                   "an_analog")
+
+
+def reset_dataframes():
+    for key in dataframe_names:
+        st.session_state[key] = pd.DataFrame()
+
 
 
 def open_df(file):
