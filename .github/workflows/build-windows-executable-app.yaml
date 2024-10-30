@@ -33,8 +33,9 @@ jobs:
       run: |
         choco install graphviz --pre -y  # Installs Graphviz on Windows
         # Confirm the Graphviz installation
-        "C:\Program Files\Graphviz\bin\dot.exe" -V || echo "Graphviz installation not found"
-        echo "Graphviz version:" && graphviz -V
+        # Verify installation of Graphviz using PowerShell's Start-Process
+        Start-Process -NoNewWindow -FilePath "C:\Program Files\Graphviz\bin\dot.exe" -ArgumentList "-V"
+
 
     - name: Install Required Packages
       run: |
