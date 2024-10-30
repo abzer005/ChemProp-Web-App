@@ -32,6 +32,8 @@ jobs:
     - name: Install Graphviz dependencies
       run: |
         choco install graphviz --pre -y  # Installs Graphviz on Windows
+        # Confirm the Graphviz installation
+        "C:\Program Files\Graphviz\bin\dot.exe" -V || echo "Graphviz installation not found"
         echo "Graphviz version:" && graphviz -V
 
     - name: Install Required Packages
