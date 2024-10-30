@@ -32,7 +32,7 @@ jobs:
       run: |
         python -m pip install -r requirements.txt || true  # First attempt
         # Attempt to install pygraphviz with Graphviz paths if the first attempt fails
-        python -m pip install pygraphviz --global-option=build_ext --global-option="-IC:\Program Files\Graphviz\include" --global-option="-LC:\Program Files\Graphviz\lib"
+        python -m pip install pygraphviz"
 
     - name: Create ChemProp2.bat file
       run: |
