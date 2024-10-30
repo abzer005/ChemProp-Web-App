@@ -28,6 +28,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install numpy  # Install numpy first
 
+    # Install Graphviz
+    - name: Install Graphviz dependencies
+      run: |
+        choco install graphviz --pre -y  # Installs Graphviz on Windows
+        echo "Graphviz version:" && graphviz -V
+
     - name: Install Required Packages
       run: |
         python -m pip install -r requirements.txt
