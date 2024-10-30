@@ -24,6 +24,8 @@ a = Analysis(
         ("./myenv/Lib/site-packages/pandas_flavor", "./pandas_flavor/"),
         ("./myenv/Lib/site-packages/numpy", "./numpy/"),
         ("./myenv/Lib/site-packages/scipy", "./scipy/"),  # Added scipy
+        ("./myenv/Lib/site-packages/streamlit_agraph", "./streamlit_agraph/"),
+        ("./myenv/Lib/site-packages/pygraphviz", "./pygraphviz/"),
     ],
     hiddenimports=[],  # Specify hidden imports if needed
     hookspath=['./hooks'],  # Custom hook path if you have specific hooks
