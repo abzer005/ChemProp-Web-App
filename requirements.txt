@@ -8,5 +8,7 @@ requests
 scikit-bio
 scipy  # Required for spearmanr, pearsonr, and distance
 scikit-learn  # Required for StandardScaler
+pygraphviz
+#pip install streamlit-agraph 
 #setuptools>=68.0.0
 #wheel>=0.38.4

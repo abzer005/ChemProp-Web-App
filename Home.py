@@ -13,9 +13,6 @@ html('<script async defer data-website-id="74bc9983-13c4-4da0-89ae-b78209c13aaf"
 
 st.image("assets/ChemProp2.png", use_column_width=True)
 
-# Under Construction Notice
-st.subheader("🚧 Under Construction 🚧")
-
 # Introduction
 st.subheader('What is ChemProp2 Used For?')
 st.write("""
@@ -82,7 +79,7 @@ st.markdown("""
 # Contribution and Follow Us
 st.subheader("Contribute and Follow Us")
 st.markdown("""
-- Interested in contributing? Check out our [GitHub personal page](https://github.com/abzer005).
+- Interested in contributing? Check out the [GitHub page](https://github.com/abzer005).
 - For more about our work, visit our [lab's GitHub page](https://github.com/Functional-Metabolomics-Lab).
 """)
 
