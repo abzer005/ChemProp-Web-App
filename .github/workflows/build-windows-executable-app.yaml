@@ -28,18 +28,25 @@ jobs:
         python -m pip install --upgrade pip
         pip install numpy  # Install numpy first
 
-    - name: Install Graphviz and Set Paths
+    - name: Install Graphviz with Chocolatey
       run: |
         choco install graphviz --pre -y
+      shell: powershell
+
+    - name: Add Graphviz Paths to Environment
+      run: |
         echo "GRAPHVIZ_BIN_PATH=C:\Program Files\Graphviz\bin" >> $GITHUB_ENV
         echo "GRAPHVIZ_INCLUDE_PATH=C:\Program Files\Graphviz\include" >> $GITHUB_ENV
         echo "GRAPHVIZ_LIB_PATH=C:\Program Files\Graphviz\lib" >> $GITHUB_ENV
 
-    - name: Install Required Packages
+    - name: Install Required Python Packages
       run: |
         python -m pip install -r requirements.txt || true  # Attempt first install
-        # Install pygraphviz with specified paths if the initial installation fails
-        python -m pip install pygraphviz --global-option=build_ext --global-option="-I$GRAPHVIZ_INCLUDE_PATH" --global-option="-L$GRAPHVIZ_LIB_PATH"
+        # Re-attempt pygraphviz installation if it fails, specifying Graphviz paths
+        python -m pip install pygraphviz --global-option=build_ext `
+              --global-option="-I${{ env.GRAPHVIZ_INCLUDE_PATH }}" `
+              --global-option="-L${{ env.GRAPHVIZ_LIB_PATH }}"
+      shell: bash
 
     - name: Create ChemProp2.bat file
       run: |
