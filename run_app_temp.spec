@@ -9,6 +9,8 @@ a = Analysis(
     datas=[
         # Add paths to specific data files from the environment
         ("./myenv/Lib/site-packages/altair/vegalite/v5/schema/vega-lite-schema.json", "./altair/vegalite/v5/schema/"),
+        ("./myenv/Lib/site-packages/streamlit", "./streamlit/"),
+        ("./myenv/Lib/site-packages/importlib_metadata", "./importlib_metadata/"),
         ("./myenv/Lib/site-packages/streamlit/static", "./streamlit/static"),
         ("./myenv/Lib/site-packages/streamlit/runtime", "./streamlit/runtime"),
         ("./myenv/Lib/site-packages/plotly", "./plotly/"),

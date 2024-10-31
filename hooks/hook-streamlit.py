@@ -17,3 +17,6 @@ datas += copy_metadata("pandas_flavor")
 datas += copy_metadata("numpy")
 datas += copy_metadata("scipy")  # Added scipy
 datas += copy_metadata("scikit_bio")  # Added scikit-bio
+datas += copy_metadata("streamlit_agraph")  # Added scipy
+datas += copy_metadata("pygraphviz")
+
