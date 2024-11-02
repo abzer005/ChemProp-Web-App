@@ -41,7 +41,9 @@ jobs:
         sed -i 's/#import site/import site/' python-${{ env.PYTHON_VERSION }}/python311._pth
 
     - name: Install Required Packages
-      run: .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
+      run: |
+       .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall numpy --no-warn-script-location
+       .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
 
     - name: Create  ChemProp2.bat file
       run: |
@@ -52,7 +54,6 @@ jobs:
       run: |
         mkdir streamlit_exe
         mv python-${{ env.PYTHON_VERSION }} streamlit_exe
-        mv FBmn-STATS-GUIde.bat streamlit_exe
         mv ChemProp2.bat streamlit_exe
         cp -r src streamlit_exe
         cp -r pages streamlit_exe
