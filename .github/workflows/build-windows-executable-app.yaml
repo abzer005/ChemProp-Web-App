@@ -23,39 +23,36 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install pip and numpy
+    - name: Setup python embeddable version
       run: |
-        python -m pip install --upgrade pip
-        pip install numpy  # Install numpy first
-
-    - name: Install Graphviz with Chocolatey
+        mkdir python-${{ env.PYTHON_VERSION }}
+        curl -O https://www.python.org/ftp/python/${{ env.PYTHON_VERSION }}/python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
+        unzip python-${{ env.PYTHON_VERSION }}-embed-amd64.zip -d python-${{ env.PYTHON_VERSION }}
+        rm python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
+    
+    - name: Install pip
       run: |
-        choco install graphviz --pre -y
-      shell: powershell
-
-    - name: Add Graphviz Paths to Environment
+        curl -O https://bootstrap.pypa.io/get-pip.py
+        ./python-${{ env.PYTHON_VERSION }}/python get-pip.py --no-warn-script-location
+        rm get-pip.py
+    
+    - name: Uncomment 'import site' in python311._pth file
       run: |
-        echo "GRAPHVIZ_BIN_PATH=C:\Program Files\Graphviz\bin" >> $GITHUB_ENV
-        echo "GRAPHVIZ_INCLUDE_PATH=C:\Program Files\Graphviz\include" >> $GITHUB_ENV
-        echo "GRAPHVIZ_LIB_PATH=C:\Program Files\Graphviz\lib" >> $GITHUB_ENV
+        sed -i 's/#import site/import site/' python-${{ env.PYTHON_VERSION }}/python311._pth
 
-    - name: Install Required Python Packages
-      run: |
-        python -m pip install -r requirements.txt || true  # Attempt first install
-        # Re-attempt pygraphviz installation if it fails, specifying Graphviz paths
-        python -m pip install pygraphviz --global-option=build_ext `
-              --global-option="-I${{ env.GRAPHVIZ_INCLUDE_PATH }}" `
-              --global-option="-L${{ env.GRAPHVIZ_LIB_PATH }}"
-      shell: bash
+    - name: Install Required Packages
+      run: .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
 
-    - name: Create ChemProp2.bat file
+    - name: Create  ChemProp2.bat file
       run: |
         echo '@echo off' > ChemProp2.bat
-        echo 'python -m streamlit run Home.py' >> ChemProp2.bat
+        echo '.\\python-${{ env.PYTHON_VERSION }}\\python -m streamlit run Home.py' >> ChemProp2.bat
 
     - name: Create All-in-one executable folder
       run: |
         mkdir streamlit_exe
+        mv python-${{ env.PYTHON_VERSION }} streamlit_exe
+        mv FBmn-STATS-GUIde.bat streamlit_exe
         mv ChemProp2.bat streamlit_exe
         cp -r src streamlit_exe
         cp -r pages streamlit_exe
