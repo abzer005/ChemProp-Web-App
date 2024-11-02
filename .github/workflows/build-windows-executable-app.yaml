@@ -43,8 +43,9 @@ jobs:
     # Download and Install Graphviz 2.46.0 manually
     - name: Download and Install Graphviz
       run: |
+
         curl -L -o graphviz-installer.exe https://gitlab.com/graphviz/graphviz/-/package_files/6164164/download
-        start /wait graphviz-installer.exe /SILENT /DIR="C:\Program Files\Graphviz"
+        cmd.exe /c "graphviz-installer.exe /SILENT /DIR=""C:\Program Files\Graphviz"""
         del graphviz-installer.exe
 
     # Install PyGraphviz with Configured Paths
