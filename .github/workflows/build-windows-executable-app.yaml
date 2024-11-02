@@ -19,12 +19,12 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         activate-environment: chemprop-env
         auto-update-conda: true
-        conda-build-args: --quiet  # Optional for quieter build
+        channels: conda-forge  # Add necessary channels explicitly
 
     - name: Install pygraphviz and other dependencies
       run: |
