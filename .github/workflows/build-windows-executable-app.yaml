@@ -47,11 +47,13 @@ jobs:
     - name: Download Graphviz Installer
       run: |
         curl -L -o graphviz-installer.exe https://gitlab.com/graphviz/graphviz/-/package_files/6164164/download
-        if not exist graphviz-installer.exe exit 1
-
+        curl -L -o graphviz-installer.exe https://gitlab.com/graphviz/graphviz/-/package_files/6164164/download
+        cmd.exe /c "if not exist graphviz-installer.exe exit 1"
+       
     - name: Install Graphviz
       run: |
         cmd.exe /c "graphviz-installer.exe /SILENT /DIR=""C:\Program Files\Graphviz"""
+        del graphviz-installer.exe
       if: success()
 
     # Install PyGraphviz with Configured Paths
