@@ -12,48 +12,33 @@ jobs:
     runs-on: windows-latest
 
     env:
-      PYTHON_VERSION: 3.11.0
+      PYTHON_VERSION: "3.11"
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        activate-environment: chemprop-env
+        auto-update-conda: true
+        conda-build-args: --quiet  # Optional for quieter build
 
-    - name: Setup python embeddable version
+    - name: Install pygraphviz and other dependencies
       run: |
-        mkdir python-${{ env.PYTHON_VERSION }}
-        curl -O https://www.python.org/ftp/python/${{ env.PYTHON_VERSION }}/python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
-        unzip python-${{ env.PYTHON_VERSION }}-embed-amd64.zip -d python-${{ env.PYTHON_VERSION }}
-        rm python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
-    
-    - name: Install pip
-      run: |
-        curl -O https://bootstrap.pypa.io/get-pip.py
-        ./python-${{ env.PYTHON_VERSION }}/python get-pip.py --no-warn-script-location
-        rm get-pip.py
-    
-    - name: Uncomment 'import site' in python311._pth file
-      run: |
-        sed -i 's/#import site/import site/' python-${{ env.PYTHON_VERSION }}/python311._pth
+        conda install -y -c conda-forge pygraphviz
+        pip install -r requirements.txt
 
-    - name: Install Required Packages
-      run: |
-       .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall numpy --no-warn-script-location
-       .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
-
-    - name: Create  ChemProp2.bat file
+    - name: Create ChemProp2.bat file
       run: |
         echo '@echo off' > ChemProp2.bat
-        echo '.\\python-${{ env.PYTHON_VERSION }}\\python -m streamlit run Home.py' >> ChemProp2.bat
+        echo 'conda activate chemprop-env && python -m streamlit run Home.py' >> ChemProp2.bat
 
     - name: Create All-in-one executable folder
       run: |
         mkdir streamlit_exe
-        mv python-${{ env.PYTHON_VERSION }} streamlit_exe
         mv ChemProp2.bat streamlit_exe
         cp -r src streamlit_exe
         cp -r pages streamlit_exe
