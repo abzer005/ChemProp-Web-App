@@ -18,54 +18,26 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Python embeddable version
-      run: |
-        mkdir python-${{ env.PYTHON_VERSION }}
-        curl -O https://www.python.org/ftp/python/${{ env.PYTHON_VERSION }}/python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
-        unzip python-${{ env.PYTHON_VERSION }}-embed-amd64.zip -d python-${{ env.PYTHON_VERSION }}
-        rm python-${{ env.PYTHON_VERSION }}-embed-amd64.zip
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        activate-environment: chemprop-env
+        auto-update-conda: true
+        channels: conda-forge  
 
-    - name: Install pip
+    - name: Install pygraphviz and other dependencies
       run: |
-        curl -O https://bootstrap.pypa.io/get-pip.py
-        ./python-${{ env.PYTHON_VERSION }}/python get-pip.py --no-warn-script-location
-        rm get-pip.py
-
-    - name: Uncomment 'import site' in python311._pth file
-      run: |
-        sed -i 's/#import site/import site/' python-${{ env.PYTHON_VERSION }}/python311._pth
-
-    - name: Install Visual C++ Build Tools
-      run: |
-        choco install visualstudio2019buildtools --version=16.11.7 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended" -y
-
-    - name: Install Required Packages
-      run: |
-        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall numpy --no-warn-script-location
-        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location 
-
-    # Use Chocolatey to install Graphviz
-    - name: Install Graphviz with Chocolatey
-      run: |
-        choco install graphviz --version=2.46.0 -y
-
-    # Install PyGraphviz with Configured Paths
-    - name: Install PyGraphviz with Configured Paths
-      run: |
-        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --config-settings="--global-option=build_ext" `
-                  --config-settings="--global-option=-IC:\Program Files\Graphviz\include" `
-                  --config-settings="--global-option=-LC:\Program Files\Graphviz\lib" `
-                  pygraphviz
+        conda install -y -c conda-forge pygraphviz
+        conda activate chemprop-env && pip install -r requirements.txt
 
     - name: Create ChemProp2.bat file
       run: |
         echo '@echo off' > ChemProp2.bat
-        echo '.\\python-${{ env.PYTHON_VERSION }}\\python -m streamlit run Home.py' >> ChemProp2.bat
-
+        echo 'conda activate chemprop-env && python -m streamlit run Home.py' >> ChemProp2.bat
     - name: Create All-in-one executable folder
       run: |
         mkdir streamlit_exe
-        mv python-${{ env.PYTHON_VERSION }} streamlit_exe
         mv ChemProp2.bat streamlit_exe
         cp -r src streamlit_exe
         cp -r pages streamlit_exe
@@ -73,11 +45,9 @@ jobs:
         cp -r example-data streamlit_exe
         cp -r .streamlit streamlit_exe
         cp Home.py streamlit_exe
-
     - name: Compress streamlit_exe folder to ChemProp2.zip
       run: |
         7z a ChemProp2.zip ./streamlit_exe/* -r
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
