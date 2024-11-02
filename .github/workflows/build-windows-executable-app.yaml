@@ -33,7 +33,8 @@ jobs:
 
     - name: Create ChemProp2.bat file
       run: |
-        echo 'CALL "%CONDA%/condabin/conda.bat" activate chemprop-env' >> ChemProp2.bat
+        echo '@echo off' > ChemProp2.bat
+        echo 'CALL "C:\Miniconda3\condabin\conda.bat" activate chemprop-env' >> ChemProp2.bat
         echo 'python -m streamlit run Home.py' >> ChemProp2.bat
 
     - name: Create All-in-one executable folder
