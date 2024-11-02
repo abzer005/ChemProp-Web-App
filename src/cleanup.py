@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import skbio
 from scipy.spatial import distance
 from sklearn.preprocessing import StandardScaler
 
