@@ -33,8 +33,9 @@ jobs:
 
     - name: Create ChemProp2.bat file
       run: |
-        echo '@echo off' > ChemProp2.bat
-        echo 'conda activate chemprop-env && python -m streamlit run Home.py' >> ChemProp2.bat
+        echo 'CALL "%CONDA%/condabin/conda.bat" activate chemprop-env' >> ChemProp2.bat
+        echo 'python -m streamlit run Home.py' >> ChemProp2.bat
+
     - name: Create All-in-one executable folder
       run: |
         mkdir streamlit_exe
@@ -45,9 +46,11 @@ jobs:
         cp -r example-data streamlit_exe
         cp -r .streamlit streamlit_exe
         cp Home.py streamlit_exe
+
     - name: Compress streamlit_exe folder to ChemProp2.zip
       run: |
         7z a ChemProp2.zip ./streamlit_exe/* -r
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
