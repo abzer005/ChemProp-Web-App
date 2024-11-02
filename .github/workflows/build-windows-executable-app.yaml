@@ -39,14 +39,20 @@ jobs:
       run: |
         choco install visualstudio2019buildtools --version=16.11.7 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended" -y
 
-
-    # Download and Install Graphviz 2.46.0 manually
-    - name: Download and Install Graphviz
+    - name: Install Required Packages
       run: |
+        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall numpy --no-warn-script-location
+        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
 
+    - name: Download Graphviz Installer
+      run: |
         curl -L -o graphviz-installer.exe https://gitlab.com/graphviz/graphviz/-/package_files/6164164/download
+        if not exist graphviz-installer.exe exit 1
+
+    - name: Install Graphviz
+      run: |
         cmd.exe /c "graphviz-installer.exe /SILENT /DIR=""C:\Program Files\Graphviz"""
-        del graphviz-installer.exe
+      if: success()
 
     # Install PyGraphviz with Configured Paths
     - name: Install PyGraphviz with Configured Paths
@@ -55,11 +61,6 @@ jobs:
                   --config-settings="--global-option=-IC:\Program Files\Graphviz\include" `
                   --config-settings="--global-option=-LC:\Program Files\Graphviz\lib" `
                   pygraphviz
-
-    - name: Install Required Packages
-      run: |
-        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall numpy --no-warn-script-location
-        .\python-${{ env.PYTHON_VERSION }}\python -m pip install --force-reinstall -r requirements.txt --no-warn-script-location
 
     - name: Create ChemProp2.bat file
       run: |
