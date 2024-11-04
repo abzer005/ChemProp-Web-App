@@ -282,7 +282,7 @@ def generate_graphml_zip_chemprop2():
 
         with tempfile.TemporaryDirectory() as temp_dir:
             chemprop2_graphml_path = os.path.join(temp_dir, chemprop2_graphml_filename)
-            generate_graphml_with_secondary_edges_chemprop2(df, graphml_path)
+            generate_graphml_with_secondary_edges_chemprop2(df, chemprop2_graphml_path)
 
             # Full path to styles.xml
             style_path = os.path.join(os.path.dirname(__file__), style_filename)
