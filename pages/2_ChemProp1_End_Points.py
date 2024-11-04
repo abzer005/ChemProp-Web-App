@@ -2,7 +2,6 @@
 import streamlit as st
 from src.chemprop1_helpers import *
 import pandas as pd
-import numpy as np
 
 st.markdown("### ChemProp1 Analysis")
 
@@ -435,55 +434,59 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
                                 st.plotly_chart(fig, use_container_width=True)
 
                         with c2:
-                            # Check if ChemProp1_scores is available in session state
-                            if 'ChemProp1_scores' in st.session_state and not filtered_df.empty:
-                                df = st.session_state['ChemProp1_scores'].copy()
-                                comp_index = filtered_df['ComponentIndex'].iloc[0]
-                                plot_df = df[df['ComponentIndex'] == comp_index]
+                            try:
+                                # Check if ChemProp1_scores is available in session state
+                                if 'ChemProp1_scores' in st.session_state and not filtered_df.empty:
+                                    df = st.session_state['ChemProp1_scores'].copy()
+                                    comp_index = filtered_df['ComponentIndex'].iloc[0]
+                                    plot_df = df[df['ComponentIndex'] == comp_index]
 
-                                # List of allowed columns for edge labels
-                                allowed_columns = [
-                                    'ComponentIndex', 'Cosine', 'DeltaMZ', 
-                                    'ChemProp1', 'Sign_ChemProp1', 'abs_ChemProp1'
-                                    ]
+                                    # List of allowed columns for edge labels
+                                    allowed_columns = [
+                                        'ComponentIndex', 'Cosine', 'DeltaMZ', 
+                                        'ChemProp1', 'Sign_ChemProp1', 'abs_ChemProp1'
+                                        ]
                                 
-                                available_columns = [col for col in plot_df.columns if col in allowed_columns]
+                                    available_columns = [col for col in plot_df.columns if col in allowed_columns]
                                 
-                                # Let the user select which column to use as edge labels
-                                edge_label_column = st.selectbox("Select column for edge labels:", options=available_columns)
+                                    # Let the user select which column to use as edge labels
+                                    edge_label_column = st.selectbox("Select column for edge labels:", options=available_columns)
 
-                                # Generate the graph using the selected column, id1, and id2
-                                nodes, edges = generate_graph_from_df_chemprop1(plot_df, filtered_df, edge_label_column)
+                                    # Generate the graph using the selected column, id1, and id2
+                                    nodes, edges = generate_graph_from_df_chemprop1(plot_df, filtered_df, edge_label_column)
 
-                                # Define graph configuration
-                                config = Config(width=800, height=600, 
-                                                directed=True, 
-                                                nodeHighlightBehavior=True, 
-                                                highlightColor="#F7A7A6", 
-                                                collapsible=True, 
-                                                node={'labelProperty': 'label'}, 
-                                                link={'labelProperty': 'label', 
-                                                      'renderLabel': True},
-                                                staticGraph=False)
+                                    # Define graph configuration
+                                    config = Config(width=800, height=600, 
+                                                    directed=True, 
+                                                    nodeHighlightBehavior=True, 
+                                                    highlightColor="#F7A7A6", 
+                                                    collapsible=True, 
+                                                    node={'labelProperty': 'label'}, 
+                                                    link={'labelProperty': 'label', 
+                                                          'renderLabel': True},
+                                                    staticGraph=False)
 
-            #                      # Custom HTML legend with blue and red circles and text inside
-                                st.markdown("""
-                                <div style="display: flex; justify-content: center;">
-                                    <div style="display: flex; align-items: center; margin-right: 20px;">
-                                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: blue; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">
-                                            Source
+                                    # Custom HTML legend with blue and red circles and text inside
+                                    st.markdown("""
+                                    <div style="display: flex; justify-content: center;">
+                                        <div style="display: flex; align-items: center; margin-right: 20px;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: blue; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                                Source
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: red; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                                Target
+                                            </div>
                                         </div>
                                     </div>
-                                    <div style="display: flex; align-items: center;">
-                                        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: red; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;">
-                                            Target
-                                        </div>
-                                    </div>
-                                </div>
-                                """, unsafe_allow_html=True)
+                                    """, unsafe_allow_html=True)
 
-                                # Display the graph in Streamlit
-                                agraph(nodes=nodes, edges=edges, config=config)
+                                    # Display the graph in Streamlit
+                                    agraph(nodes=nodes, edges=edges, config=config)
     
-                            else:
-                                st.write("No ChemProp1 scores data available.")
+                                else:
+                                    st.write("No ChemProp1 scores data available.")
+
+                            except ModuleNotFoundError:
+                                st.error("This page requires the `pygraphviz` package, which is not available in the Windows app.")
