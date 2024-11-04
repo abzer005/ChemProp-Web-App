@@ -196,34 +196,68 @@ def add_names_to_chemprop(edge_df, gnps_df):
     corresponding 'Compound Name', 'parent mass', and 'RTMean' to the new columns.
 
     Args:
-        edge_df (pd.DataFrame): The ChemProp2_scores dataframe will be used.
+        edge_df (pd.DataFrame): The ChemProp2_scores dataframe.
         gnps_df (pd.DataFrame): The an_gnps dataframe.
 
     Returns:
-        pd.DataFrame: The updated df with the new columns added.
+        pd.DataFrame: The updated dataframe with the new columns added.
     """
-    # Ensure the column names match
-    gnps_df = gnps_df.rename(columns={'cluster index': 'CLUSTERID', 'parent mass': 'mz', 'RTMean': 'RT'})
+    # Determine the column renaming based on the existing columns in gnps_df
+    if {'cluster index', 'parent mass', 'RTMean'}.issubset(gnps_df.columns):
+        gnps_df = gnps_df.rename(columns={'cluster index': 'CLUSTERID', 'parent mass': 'mz', 'RTMean': 'RT'})
+    elif {'#Scan#', 'Precursor_MZ'}.issubset(gnps_df.columns):
+        gnps_df = gnps_df.rename(columns={'#Scan#': 'CLUSTERID', 'Precursor_MZ': 'mz'})
+        # 'RT' is not present, so we drop it if not available
+        if 'RT' in gnps_df.columns:
+            gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']]
+        else:
+            gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz']]
+
+    # Initialize the columns for mz and RT in edge_df based on gnps_df availability
+    cols_to_merge = ['CLUSTERID', 'Compound_Name']
+    if 'mz' in gnps_df.columns:
+        cols_to_merge.append('mz')
+    if 'RT' in gnps_df.columns:
+        cols_to_merge.append('RT')
 
     # Merge for CLUSTERID1
-    merged_df = edge_df.merge(gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']],
+    merged_df = edge_df.merge(gnps_df[cols_to_merge],
                               left_on='CLUSTERID1',
                               right_on='CLUSTERID',
                               how='left')
-    merged_df = merged_df.rename(columns={'Compound_Name': 'ID1_name', 'mz': 'ID1_mz', 'RT': 'ID1_RT'})
+    # Rename columns from gnps_df to indicate they correspond to CLUSTERID1
+    rename_columns = {'Compound_Name': 'ID1_name'}
+    if 'mz' in gnps_df.columns:
+        rename_columns['mz'] = 'ID1_mz'
+    if 'RT' in gnps_df.columns:
+        rename_columns['RT'] = 'ID1_RT'
+    merged_df = merged_df.rename(columns=rename_columns)
     merged_df = merged_df.drop(columns=['CLUSTERID'])
 
     # Merge for CLUSTERID2
-    merged_df = merged_df.merge(gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']],
+    merged_df = merged_df.merge(gnps_df[cols_to_merge],
                                 left_on='CLUSTERID2',
                                 right_on='CLUSTERID',
                                 how='left')
-    merged_df = merged_df.rename(columns={'Compound_Name': 'ID2_name', 'mz': 'ID2_mz', 'RT': 'ID2_RT'})
+    # Rename columns from gnps_df to indicate they correspond to CLUSTERID2
+    rename_columns = {'Compound_Name': 'ID2_name'}
+    if 'mz' in gnps_df.columns:
+        rename_columns['mz'] = 'ID2_mz'
+    if 'RT' in gnps_df.columns:
+        rename_columns['RT'] = 'ID2_RT'
+    merged_df = merged_df.rename(columns=rename_columns)
 
     # Drop the extra 'CLUSTERID' column generated during merging
     merged_df = merged_df.drop(columns=['CLUSTERID'])
 
+    # If RT was not present in gnps_df, add 'ID1_RT' and 'ID2_RT' columns with zeros
+    if 'ID1_RT' not in merged_df.columns:
+        merged_df['ID1_RT'] = 0
+    if 'ID2_RT' not in merged_df.columns:
+        merged_df['ID2_RT'] = 0
+
     return merged_df
+
 
 
 def generate_graphml_with_secondary_edges_chemprop1(df, output_file):

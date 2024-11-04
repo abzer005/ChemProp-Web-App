@@ -173,8 +173,8 @@ if 'nw' in st.session_state and 'chemprop_ft' in st.session_state and 'chemprop_
             result_df = result_df.dropna(subset=extra_cols_range, how='all')
 
             # Check if 'an_gnps' is present in the session state and is not empty
-            if 'an_gnps' in st.session_state and not st.session_state['an_gnps'].empty:
-    
+            if 'an_gnps' in st.session_state and st.session_state['an_gnps'] is not None and not st.session_state['an_gnps'].empty:
+
                 # Get the DataFrames from session state
                 gnps_df = st.session_state['an_gnps'].copy()
 
@@ -187,9 +187,12 @@ if 'nw' in st.session_state and 'chemprop_ft' in st.session_state and 'chemprop_
                # Update result_df to reflect the changes
                 result_df = updated_chemprop_df
 
-            # Display the (potentially updated) result_df
-            st.dataframe(result_df)
-            st.session_state['ChemProp2_scores'] = result_df
+                st.dataframe(result_df)
+                st.session_state['ChemProp2_scores'] = result_df
+            else:
+                # Display the (potentially updated) result_df
+                st.dataframe(result_df)
+                st.session_state['ChemProp2_scores'] = result_df
 
             # Allow users to download the results
             # Let the user input the filename (default value provided)

@@ -1,6 +1,9 @@
 import streamlit as st
 from .common import *  # Importing common functionalities from the 'common' module
 import pandas as pd
+from gnpsdata import taskresult
+from gnpsdata import workflow_fbmn
+import urllib
 
 patterns = [
     ["m/z", "mz", "mass over charge"],
@@ -117,3 +120,20 @@ def display_dataframe_with_toggle(df_key, display_name):
             st.dataframe(st.session_state[df_key])  # Show full dataframe
         else:
             st.dataframe(st.session_state[df_key].head())  # Show header
+
+
+def load_from_gnps(task_id):
+
+    try: # GNPS2 will run here
+        ft = workflow_fbmn.get_quantification_dataframe(task_id, gnps2=True).set_index("row ID")
+        md = workflow_fbmn.get_metadata_dataframe(task_id, gnps2=True).set_index("filename")
+        an = taskresult.get_gnps2_task_resultfile_dataframe(task_id, "nf_output/library/merged_results_with_gnps.tsv")
+        nw = taskresult.get_gnps2_task_resultfile_dataframe(task_id, "nf_output/networking/filtered_pairs.tsv")
+
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error encountered: {e}") # GNPS1 task IDs can not be retrieved and throw HTTP Error 500
+        
+    if md.empty: # Handle empty metadata
+        md = pd.DataFrame()
+
+    return ft, md, an, nw

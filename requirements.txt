@@ -8,5 +8,6 @@ requests
 scipy  # Required for spearmanr, pearsonr, and distance
 scikit-learn  # Required for StandardScaler
 streamlit-agraph 
+git+https://github.com/Wang-Bioinformatics-Lab/GNPSDataPackage.git
 
 

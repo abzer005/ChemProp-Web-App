@@ -11,7 +11,8 @@ st.markdown("### Please select your method for data input below.")
 # Input Selection Section
 input_method = st.selectbox("Select Input Method", 
                             ["Use Example Dataset",
-                             "Manual Input"
+                             "Manual Input",
+                             "GNPS(2) task ID",
                              ],
                              index=0  # This sets "Use Example Dataset" as the default option
                              )
@@ -79,25 +80,60 @@ if input_method == "Manual Input":
             st.session_state['an_gnps'] = load_annotation(annotation_file)
 
     # Display headers and 'View all' buttons for each file
-    for key, label in zip(['ft', 'md', 'nw', 'an_gnps'],
-                          ["Feature Table", "Metadata", "Edge Table", "Annotation Information File"]):
-        
-        if key in st.session_state and st.session_state[key] is not None:
-            df = st.session_state[key]
-            col1, col2 = st.columns([0.8, 0.2])
-            col1.write(f"{label} - Header")
-            view_all = col2.checkbox("View all", key=f"{key}_toggle")
-            
-            if view_all:
-                st.dataframe(df)
-            else:
-                st.dataframe(df.head())
+    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
+                              ['ft', 'md', 'nw', 'an_gnps']):
+        display_dataframe_with_toggle(key, file_name)
 
+if input_method == "GNPS(2) task ID":
+    if st.session_state['last_input_method'] != input_method:
+        for key in ['ft', 'md', 'an_gnps', 'nw']:
+            st.session_state[key] = None
+        st.session_state['last_input_method'] = input_method
+        st.warning("💡 This tool only supports task IDs from GNPS2.")
+    
+    task_id = st.text_input("GNPS task ID", "", disabled=False, key="gnps_task_id")
+    #st.write(task_id)
+    _, c2, _ = st.columns(3)
+
+    # Ensure button always displays
+    load_button_clicked = c2.button("Load files from GNPS", type="primary", disabled=len(task_id) == 0, use_container_width=True)
+    
+    if load_button_clicked and task_id:
+        st.session_state["ft"], st.session_state["md"], st.session_state["an_gnps"], st.session_state["nw"] = load_from_gnps(task_id)
+
+        # Check if 'ft' and 'nw' are loaded but 'md' is missing
+        if st.session_state.get("ft") is not None and st.session_state.get("nw") is not None and (
+            st.session_state.get("md") is None or st.session_state["md"].empty
+        ):
+            st.warning("Metadata is missing. Please upload it manually.")
+            
+            md_file = st.file_uploader(
+                "Upload Metadata", 
+                type=["csv", "xlsx", "txt", "tsv"],
+                help="User-created metadata table providing context for samples."
+            )
+
+            if md_file:
+                md = load_md(md_file)
+                st.session_state['md'] = md
+                st.success("Metadata was loaded successfully!")
+
+    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
+                              ['ft', 'md', 'nw', 'an_gnps']):
+        display_dataframe_with_toggle(key, file_name)
 
 st.markdown("## Data Cleanup")
 
 # Check if the data is available in the session state
-if 'ft' in st.session_state and 'md' in st.session_state:
+if (
+    'ft' in st.session_state and 
+    'md' in st.session_state and 
+    st.session_state['ft'] is not None and 
+    not st.session_state['ft'].empty and 
+    st.session_state['md'] is not None and 
+    not st.session_state['md'].empty
+):
+
     ft = st.session_state['ft'].copy()
     md = st.session_state['md'].copy()
 
@@ -181,10 +217,8 @@ if 'ft' in st.session_state and 'md' in st.session_state:
 
          else:
              st.warning("You selected everything as sample type. Blank removal is not possible.")
-    else:
-        st.warning("Data not loaded. Please go back and load the data first.")
         
-    if 'ft_for_analysis' in st.session_state and not st.session_state['ft_for_analysis'].empty:
+    if not st.session_state['ft_for_analysis'].empty:
         cutoff_LOD = get_cutoff_LOD(st.session_state['ft_for_analysis'])
 
     imputation = st.checkbox("Impute missing values?", 
@@ -213,7 +247,7 @@ if 'ft' in st.session_state and 'md' in st.session_state:
         st.session_state['ft_for_analysis'] = normalized_ft
 else:
     # If data is not available, display a message
-    st.warning("Data not loaded. Please go back and load the data first.")
+    st.warning("Data not loaded. Please load the data first.")
 
 
 # Displaying the message with a link
@@ -224,7 +258,7 @@ st.markdown("""
     }
     </style>
     <div class='big-font'>
-    For more functionalities such as data cleanup, univariate and multivariate statistics, 
+    For more functionalities such as univariate and multivariate statistics, 
     explore our <a href="https://fbmn-statsguide.gnps2.org/" target="_blank"><b>FBMN-STATS webpage</b></a>.
     </div>
     """, unsafe_allow_html=True)
