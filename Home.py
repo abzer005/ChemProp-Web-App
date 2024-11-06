@@ -49,15 +49,20 @@ st.write("""
          Key aspects of the output include:
          - **Score Range**: Each node pair gets a score between -1 and +1.
          - **Score Interpretation**: The magnitude of the score indicates the strength of the potential transformation. The sign of the score (positive or negative) reveals the directionality of the transformation. For example, in a node pair A & B, the sign of the score will indicate whether the transformation is from A to B or vice versa.
-         - **Integration with Cytoscape**: You can download the CSV file and merge it with Cytoscape for further analysis and visualization.
+         - **Integration with Cytoscape**: Download results as a zip file (containing GraphML and style files) to open in Cytoscape, allowing for further analysis and detailed visualization.
          
-         Additionally, ChemProp2 offers a 'Smart View' feature:
-         - **Visualize in Molecular Network**: Use this tab to view each node pair within a molecular network. This visualization includes the node pairs' first and/or second neighbors, along with the ChemProp2 scores and directionality indicators. You can save these visualizations as PNG images for your records or presentations.
+        ### Additional Visualizations and Features
+        - **Global Transformation Patterns**: Visualize overall transformation trends in your data with a score plot showing ChemProp scores against various mass differences.
+        - **Filtering Options**: Use filters to refine scores by range, mass, annotation name, or cluster ID, displaying only relevant edges in a list. Selecting an edge shows:
+          - The intensity trends for node pairs belonging to that edge.
+          - The corresponding node pair within the molecular network as a subnetwork. (Note: Full network visualization is minimized for simplified rendering, showing only the relevant cluster and its ChemProp2 scores with directional indicators.)
+        - **Export Visualizations**: Save these visualizations as PNG files for easy sharing and documentation.
+
          """)
 
 # Citation and Resources
 st.subheader('Citation and Further Resources')
-st.write('If you use ChemProp2 in your research, please cite: ....')
+st.write('If you use ChemProp2 in your research, please cite:')
 st.markdown("""
             * [FBMN-STATS](https://fbmn-statsguide.gnps2.org/) - A statistical pipeline for downstream processing of FBMN results.
             * Pakkir Shah, A.K., Walter, A., Ottosson, F. et al. Statistical analysis of feature-based molecular networking results from non-targeted metabolomics data. Nat Protoc (2024). https://doi.org/10.1038/s41596-024-01046-3
