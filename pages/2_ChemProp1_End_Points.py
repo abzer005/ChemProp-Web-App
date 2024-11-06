@@ -464,7 +464,7 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
                                                     node={'labelProperty': 'label'}, 
                                                     link={'labelProperty': 'label', 
                                                           'renderLabel': True},
-                                                    staticGraph=False)
+                                                    staticGraph=True)
 
                                     # Custom HTML legend with blue and red circles and text inside
                                     st.markdown("""

@@ -56,14 +56,14 @@ if input_method == "Manual Input":
                                    type=["csv", "xlsx", "txt", "tsv"],
                                    help = "This table is a key output of LC-MS/MS metabolomics studies. The table presents a list of mass spectral features along with their relative intensities (represented by its integrated peak area) observed across various samples.")
         if ft_file:
-            st.session_state['ft'] = load_ft(ft_file)
+            st.session_state['ft'] = load_ft(ft_file).set_index("row ID")
 
     with col2:
         md_file = st.file_uploader("Upload Metadata", 
                                    type=["csv", "xlsx", "txt", "tsv"],
                                    help = "The metadata table is created by the user, providing additional context for the measured samples, such as sample type, species, and tissue type, etc.")
         if md_file:
-            st.session_state['md'] = load_md(md_file)
+            st.session_state['md'] = load_md(md_file).set_index("filename")
     
     # Create 2 columns for the nw, annotation file uploaders
     col3, col4 = st.columns(2)

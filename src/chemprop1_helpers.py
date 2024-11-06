@@ -205,14 +205,18 @@ def add_names_to_chemprop(edge_df, gnps_df):
     # Determine the column renaming based on the existing columns in gnps_df
     if {'cluster index', 'parent mass', 'RTMean'}.issubset(gnps_df.columns):
         gnps_df = gnps_df.rename(columns={'cluster index': 'CLUSTERID', 'parent mass': 'mz', 'RTMean': 'RT'})
-    elif {'#Scan#', 'Precursor_MZ'}.issubset(gnps_df.columns):
-        gnps_df = gnps_df.rename(columns={'#Scan#': 'CLUSTERID', 'Precursor_MZ': 'mz'})
+    elif {'#Scan#', 'Precursor_MZ', 'RT_Query'}.issubset(gnps_df.columns):
+        gnps_df = gnps_df.rename(columns={'#Scan#': 'CLUSTERID', 'Precursor_MZ': 'mz', 'RT_Query': 'RT'})
         # 'RT' is not present, so we drop it if not available
         if 'RT' in gnps_df.columns:
             gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']]
         else:
             gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz']]
 
+    # Verify required columns are in gnps_df after renaming
+    if 'Compound_Name' not in gnps_df.columns:
+        raise KeyError("The 'Compound_Name' column is missing from the annotation file. Check the input data.")
+    
     # Initialize the columns for mz and RT in edge_df based on gnps_df availability
     cols_to_merge = ['CLUSTERID', 'Compound_Name']
     if 'mz' in gnps_df.columns:
@@ -248,7 +252,7 @@ def add_names_to_chemprop(edge_df, gnps_df):
     merged_df = merged_df.rename(columns=rename_columns)
 
     # Drop the extra 'CLUSTERID' column generated during merging
-    merged_df = merged_df.drop(columns=['CLUSTERID'])
+    merged_df = merged_df.drop(columns=['CLUSTERID'], errors='ignore')
 
     # If RT was not present in gnps_df, add 'ID1_RT' and 'ID2_RT' columns with zeros
     if 'ID1_RT' not in merged_df.columns:
@@ -465,12 +469,20 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
     id1 = str(filtered_df['CLUSTERID1'].iloc[0])
     id2 = str(filtered_df['CLUSTERID2'].iloc[0])
 
+    # Add the red node for CLUSTERID2 if it hasn't been added
+    if id2 not in added_nodes:
+        nodes.append(Node(id=id2,
+                          label="Target",  # Adjust label if needed
+                          size=20, 
+                          color="red",
+                          ))
+        added_nodes.add(id2)
+
     for _, row in df.iterrows():
         clusterid1 = str(row['CLUSTERID1'])
         clusterid2 = str(row['CLUSTERID2'])
         abs_chemprop = row['abs_ChemProp1']
         sign_chemprop = row['Sign_ChemProp1']
-        deltamz = row['DeltaMZ']
         id1_name = row['ID1_name'] if 'ID1_name' in row else clusterid1
         id2_name = row['ID2_name'] if 'ID2_name' in row else clusterid2
         mz1 = row['ID1_mz']
@@ -483,7 +495,7 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
 
         # Color node1 and node2 based on id1 and id2
         color_1 = "blue" if clusterid1 == id1 else "lightgray"
-        color_2 = "red" if clusterid2 == id2 else "lightgray"
+        color_2 = "lightgray" if clusterid2 != id2 else "red"
 
         # Add nodes if not already added
         if clusterid1 not in added_nodes:
@@ -499,7 +511,7 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
                               label=f"{mz2:.2f}",
                               size=20, 
                               color=color_2,
-                              title=f"ID: {clusterid2}\nName: {id2_name}\nm/z: {mz2}\nRT: {rt2}"))
+                              title=f"ID: {clusterid2}\n Name: {id2_name}\n m/z: {mz2}\n RT: {rt2}"))
             added_nodes.add(clusterid2)
         
         # Add edge with arrow based on abs_chemprop and sign_chemprop2
@@ -509,6 +521,15 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
                 
            elif sign_chemprop == -1:
                edges.append(Edge(source=clusterid2, target=clusterid1, label=f"{edge_label_value:.2f}", color="orange", arrow=True, font={"size": 10}))
+
+    # Update the red node with the correct label and title information
+    for node in nodes:
+        if node.id == id2:
+            # Find the row in df with the correct information for id2
+            row = df[(df['CLUSTERID2'] == int(id2))].iloc[0]
+            node.label = f"{row['ID2_mz']:.2f}"
+            node.title = f"ID: {id2}\n Name: {row['ID2_name']}\n m/z: {row['ID2_mz']}\n RT: {row['ID2_RT']}"
+            break
 
     return nodes, edges
 
