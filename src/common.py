@@ -49,7 +49,7 @@ def page_setup():
         clear_cache_button()
         v_space(1)
         
-        st.image("https://raw.githubusercontent.com/abzer005/ChemProp2/main/streamlit/assets/ChemProp2.png", use_column_width=True)
+        st.image("https://raw.githubusercontent.com/abzer005/ChemProp2/main/streamlit/assets/ChemProp2.png", use_container_width =True)
 
 
 dataframe_names = ("md",

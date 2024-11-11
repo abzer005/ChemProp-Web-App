@@ -11,7 +11,7 @@ html('<script async defer data-website-id="74bc9983-13c4-4da0-89ae-b78209c13aaf"
 # Page Header
 #st.title("ChemProp2")
 
-st.image("assets/ChemProp2.png", use_column_width=True)
+st.image("assets/ChemProp2.png", use_container_width=True)
 
 # Introduction
 st.subheader('What is ChemProp2 Used For?')
