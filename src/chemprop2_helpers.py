@@ -7,6 +7,7 @@ from .common import *  # Importing common functionalities from the 'common' modu
 from src.cleanup import *
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import re
 from scipy.stats import spearmanr, pearsonr
 import plotly.graph_objects as go
@@ -73,6 +74,7 @@ def ChemProp2_scoring(desired_network_table, desired_feature_table, names_nodes,
     # Add absolute value columns
     abs_values = new_network_table[['ChemProp2', 'ChemProp_spearman', 'ChemProp_log', 'ChemProp_sqrt']].abs()
     abs_values.columns = [f"abs_{col}" for col in abs_values.columns]
+    abs_values = abs_values.apply(pd.to_numeric, errors='coerce')
     
     # Add sign of ChemProp2
     new_network_table['Sign_ChemProp2'] = np.sign(new_network_table['ChemProp2'])
@@ -307,71 +309,156 @@ def generate_graphml_zip_chemprop2():
                     mime='application/zip'
                 )
 
-
-def generate_graph_from_df_chemprop2(df, filtered_df, edge_label_column):
+def calculate_fdr(edge_df, features_df, metadata_df, score_range=(-1, 1), bin_size=0.001):
     """
-    Generate nodes and edges from the DataFrame. The user can select a column to use as the edge label.
-    Color specific nodes based on CLUSTERID1 and CLUSTERID2 from filtered_df.
+    Calculates a cutoff to set a false discovery rate (FDR) for correlation scores. A target-decoy approach 
+    is used to calculate FDR scores, allowing users to select a range to trust the ChemProp2 scores.
 
     Parameters:
-    df (pd.DataFrame): The DataFrame containing the node and edge data.
-    filtered_df (pd.DataFrame): The DataFrame containing a single row with CLUSTERID1 and CLUSTERID2.
-    edge_label_column (str): The name of the column from df to use as the label for the edges.
-    
+    - edge_df (pd.DataFrame): The DataFrame containing node and edge data.
+    - features_df (pd.DataFrame): Feature table.
+    - metadata_df (pd.DataFrame): Metadata table.
+    - score_range (tuple): Range for score binning (default is (-1, 1)).
+    - bin_size (float): Size of bins for histogram (default is 0.01).
     Returns:
-    nodes, edges: Lists of nodes and edges for the graph.
+    - combined_fdr_df (pd.DataFrame): DataFrame with FDR values across bins for the decoy set.
     """
-    nodes = []
-    edges = []
-    added_nodes = set()  # Set to track added nodes to avoid duplicates
+    # Calculate target scores
+    target_df = ChemProp2_scoring(edge_df, features_df, list(features_df.index), metadata_df)
 
-    # Get CLUSTERID1 and CLUSTERID2 from filtered_df
-    id1 = str(filtered_df['CLUSTERID1'].iloc[0])
-    id2 = str(filtered_df['CLUSTERID2'].iloc[0])
+    # Define bins based on specified range and bin size
+    bins = np.arange(score_range[0], score_range[1] + bin_size, bin_size)
 
-    for _, row in df.iterrows():
-        clusterid1 = str(row['CLUSTERID1'])
-        clusterid2 = str(row['CLUSTERID2'])
-        abs_chemprop = row['abs_ChemProp2']
-        sign_chemprop2 = row['Sign_ChemProp2']
-        deltamz = row['DeltaMZ']
-        id1_name = row['ID1_name'] if 'ID1_name' in row else clusterid1
-        id2_name = row['ID2_name'] if 'ID2_name' in row else clusterid2
-        mz1 = row['ID1_mz']
-        mz2 = row['ID2_mz']
-        rt1 = row['ID1_RT']
-        rt2 = row['ID2_RT']
-
-        # Get the edge label from the user-selected column
-        edge_label_value = row[edge_label_column]
-
-        # Color node1 and node2 based on id1 and id2
-        color_1 = "blue" if clusterid1 == id1 else "lightgray"
-        color_2 = "red" if clusterid2 == id2 else "lightgray"
-
-        # Add nodes if not already added
-        if clusterid1 not in added_nodes:
-            nodes.append(Node(id=clusterid1, 
-                              label=f"{mz1:.2f}", 
-                              size=20, 
-                              color=color_1,
-                              title=f"ID: {clusterid1}\n Name: {id1_name}\n m/z: {mz1}\n RT: {rt1}"))
-            added_nodes.add(clusterid1)
+    # get the decoy table
+    decoy_features_df = features_df.apply(np.random.permutation)
+    decoy_features_df += np.random.normal(0, 0.1, decoy_features_df.shape)  # Add noise
         
-        if clusterid2 not in added_nodes:
-            nodes.append(Node(id=clusterid2,
-                              label=f"{mz2:.2f}",
-                              size=20, 
-                              color=color_2,
-                              title=f"ID: {clusterid2}\nName: {id2_name}\nm/z: {mz2}\nRT: {rt2}"))
-            added_nodes.add(clusterid2)
-        
-        # Add edge with arrow based on abs_chemprop and sign_chemprop2
-        if abs_chemprop > 0:
-           if sign_chemprop2 == 1:
-               edges.append(Edge(source=clusterid1, target=clusterid2,label=f"{edge_label_value:.2f}", color="orange", arrow=True, font={"size": 10}))
-                
-           elif sign_chemprop2 == -1:
-               edges.append(Edge(source=clusterid2, target=clusterid1, label=f"{edge_label_value:.2f}", color="orange", arrow=True, font={"size": 10}))
+    # decoy_edge_df = edge_df.copy()
+    # decoy_edge_df['CLUSTERID1'] = np.random.permutation(edge_df['CLUSTERID1'])
+    # decoy_edge_df['CLUSTERID2'] = np.random.permutation(edge_df['CLUSTERID2'])
 
-    return nodes, edges
+    decoy_df = ChemProp2_scoring(edge_df, decoy_features_df, list(decoy_features_df.index), metadata_df)
+
+    # Calculate target and decoy counts per bin
+    target_counts, _ = np.histogram(target_df['ChemProp2'], bins=bins)
+    decoy_counts, _ = np.histogram(decoy_df['ChemProp2'], bins=bins)
+    
+    # Calculate FDR for each bin
+    fdr_df = pd.DataFrame({'Range_min': bins[:-1], 
+                               'Range_max': bins[1:], 
+                               'Target_counts': target_counts,
+                               'Decoy_counts': decoy_counts
+                               })
+
+    epsilon = 0
+
+    # Separate positive and negative bins
+    positive_bins = fdr_df[fdr_df['Range_max'] > 0].reset_index(drop=True)
+    negative_bins = fdr_df[fdr_df['Range_max'] < 0].reset_index(drop=True)
+
+    # Calculate cumulative FDR for positive bins (0 to 1, forward order)
+    positive_bins = positive_bins[::-1].reset_index(drop=True)  # Reverse order for cumulative sum
+    positive_bins['FDR'] = positive_bins['Decoy_counts'].cumsum() / (
+        positive_bins['Target_counts'].cumsum()  + epsilon + positive_bins['Decoy_counts'].cumsum()
+    )
+
+    positive_bins = positive_bins[::-1].reset_index(drop=True)  # Restore original order
+
+    # Calculate cumulative FDR for negative bins (-1 to 0)
+    negative_bins['FDR'] = negative_bins['Decoy_counts'].cumsum() / (
+        negative_bins['Target_counts'].cumsum() +  epsilon + negative_bins['Decoy_counts'].cumsum()
+    )
+   
+    # Combine positive and negative bins
+    combined_fdr_df = pd.concat([negative_bins, positive_bins]).reset_index(drop=True)
+
+    # Plot FDR results
+    fig_fdr = go.Figure()
+    fig_fdr.add_trace(go.Scatter(
+        x=combined_fdr_df['Range_min'],
+        y=combined_fdr_df['FDR']*100,
+        mode='markers',
+        name = 'FDR Score'
+    ))
+
+    # Define FDR threshold levels and their colors
+    fdr_thresholds = [10, 15, 20]
+    colors = ['green', 'orange', 'red']
+
+    ########################################
+    # Sort the combined_fdr_df by FDR values
+    combined_fdr_df_sorted = combined_fdr_df.sort_values(by='FDR').reset_index(drop=True)
+    combined_fdr_df_sorted['FDR'] *= 100
+
+    # Subset the table to include rows with FDR between 10 and 20
+    fdr_subset_df = combined_fdr_df_sorted[(combined_fdr_df_sorted['FDR'] >= 10) & (combined_fdr_df_sorted['FDR'] <= 20)]
+    #########################################
+
+    # Loop through each threshold to add a horizontal line and highlight the closest point
+    for fdr_value, color in zip(fdr_thresholds, colors):
+        # Add a horizontal line for the FDR threshold
+        fig_fdr.add_shape(
+            type="line",
+            x0=combined_fdr_df['Range_min'].min(), 
+            x1=combined_fdr_df['Range_min'].max(),
+            y0=fdr_value, y1=fdr_value,
+            line=dict(color=color, width=1, dash="dash"),
+            name=f"{fdr_value}% FDR"
+        )
+
+        # Identify points that are within a small tolerance of the FDR threshold
+        tolerance = 0.8  # Adjust tolerance as needed to capture points near each threshold
+        threshold_points = combined_fdr_df[(combined_fdr_df['FDR'] * 100 >= fdr_value - tolerance) & 
+                                        (combined_fdr_df['FDR'] * 100 <= fdr_value + tolerance)]
+
+        # Add a marker at the closest point to the FDR threshold
+        fig_fdr.add_trace(go.Scatter(
+            x=threshold_points['Range_min'],
+            y=threshold_points['FDR'] * 100,
+            mode='markers',
+            marker=dict(color=color, size=10, symbol='circle-open'),
+            name=f"{fdr_value}% Threshold"
+        ))
+
+    # Update layout for the figure
+    fig_fdr.update_layout(
+        title="Overlay of FDR Score for Target-Decoy Sets",
+        xaxis_title="ChemProp2 Score Range",
+        yaxis_title="FDR (%)",
+        width=900,
+        height=500
+    )
+
+    # Plot histograms for target and decoys
+    fig_histogram = go.Figure()
+    fig_histogram.add_trace(go.Histogram(
+        x=target_df['ChemProp2'],
+        name='Target',
+        xbins=dict(start=-1, end=1, size=0.1),
+        opacity=0.5,
+        marker_color='blue'
+    ))
+
+    fig_histogram.add_trace(go.Histogram(
+        x=decoy_df['ChemProp2'],
+        name='Decoy',
+        xbins=dict(start=-1, end=1, size=0.1),
+        opacity=0.3,
+        marker_color='red'
+    ))
+
+    fig_histogram.update_layout(
+        title="Histogram of Target vs. Decoy Scores",
+        xaxis_title="ChemProp2 Score Range",
+        yaxis_title="Frequency",
+        xaxis_range=[-1, 1],
+        barmode='overlay',
+        width=900,
+        height=500
+    )
+
+    # Display in Streamlit
+    # st.plotly_chart(fig_histogram)
+    # st.plotly_chart(fig_fdr)
+    
+    return combined_fdr_df, fig_histogram, fig_fdr

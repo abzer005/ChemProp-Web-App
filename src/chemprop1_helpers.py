@@ -170,6 +170,7 @@ def run_chemprop1_analysis(desired_network_table, desired_feature_table, chempro
     # Add absolute value columns
     abs_values = new_network_table[['ChemProp1']].abs()
     abs_values.columns = [f"abs_{col}" for col in abs_values.columns]
+    abs_values = abs_values.apply(pd.to_numeric, errors='coerce')
 
     # Add sign of ChemProp1
     new_network_table['Sign_ChemProp1'] = np.sign(new_network_table['ChemProp1'])

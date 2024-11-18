@@ -257,7 +257,7 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
 
             # Allow users to download the results
             # Let the user input the filename (default value provided)
-            user_filename = st.text_input("Enter the filename for the CSV:", 
+            user_filename = st.text_input("Enter the filename for the CSV and press Enter to apply the name:", 
                                           value="chemprop1_scores_results.csv")
 
             # Ensure the file ends with '.csv'

@@ -36,6 +36,12 @@ if 'md_for_analysis' in st.session_state and not st.session_state['md_for_analys
                 - Treatments: Select the metadata column that contains the treatment conditions (e.g., control and treatment groups). This category is optional.
                 - Replicates: Select the metadata column that contains the replicate information. This category is optional and will be used for plotting intensity trends.
                 """)
+    
+    st.markdown("""
+                <div style="color: #05577C; font-size: 20px;">
+                Select <b>only one metadata attribute</b> per checkbox column.
+                </div>""", 
+                unsafe_allow_html=True)
 
     # Add a new column for checkboxes (initialized to False)
     df['ChemProp2'] = False
@@ -134,9 +140,7 @@ if subset_md:
             st.session_state['chemprop_subset_md'] = subgroup_md
             st.session_state['chemprop_md'] = subgroup_md[chemprop2_row]
     else:
-        st.warning("No group selected.")
-         
-
+        st.warning("No group selected.")       
 
 
 # Streamlit Interface
@@ -194,27 +198,34 @@ if 'nw' in st.session_state and 'chemprop_ft' in st.session_state and 'chemprop_
                 st.dataframe(result_df)
                 st.session_state['ChemProp2_scores'] = result_df
 
-            # Allow users to download the results
-            # Let the user input the filename (default value provided)
-            user_filename = st.text_input("Enter the filename for the CSV:", 
+            # Display only the row counts for both DataFrames
+            st.markdown(
+                f"""
+                <p style="color:red;">Number of edges in the original edge table: <b>{network_df.shape[0]}</b></p>
+                <p style="color:red;">Number of edges in the ChemProp2 edge table: <b>{result_df.shape[0]}</b></p>
+                """,
+                unsafe_allow_html=True)
+            
+            if network_df.shape[0] != result_df.shape[0]:
+                st.warning('The reduced number of edges might be due to the removal of blank entries.')
+          
+            user_filename = st.text_input("**Enter the filename for the CSV and press Enter to apply the name:**", 
                                           value="chemprop2_scores_results.csv")
-
-            # Ensure the file ends with '.csv'
+                    
+            # Check if the user has entered a filename
             if not user_filename.endswith('.csv'):
                 user_filename += '.csv'
-                
+
             # Convert result_df to CSV and encode it
             chemprop2_result = result_df.to_csv(index=False).encode('utf-8')
 
             # Create three columns in the UI for buttons
-            col1, col2, col3, col4 = st.columns([1.1, 1, 1, 4.9]) # to make the buttons lie close to each other
+            col1, col2, col3, col4 = st.columns([1.1, 1.1, 1.1, 4.5]) # to make the buttons lie close to each other
 
-            # Column 1: Download CSV
             with col1:
-                # Provide a download button for CSV
                 st.download_button(
-                    label="Download Results as CSV",
-                    data=chemprop2_result,  
+                    label="Download result as CSV",
+                    data=chemprop2_result,
                     file_name=user_filename,
                     mime='text/csv'
                 )
@@ -232,7 +243,21 @@ if 'nw' in st.session_state and 'chemprop_ft' in st.session_state and 'chemprop_
                     if 'ChemProp2_scores' in st.session_state:
                         st.write('This functionality will be added soon')
                          # Call function to visualize the network
+            
+            ##########################
 
+            st.markdown('### False Discovery Rate')
+
+            if st.button("Apply FDR"):
+                if 'ChemProp2_scores' in st.session_state:
+                    st.write('Select the positive and negative cutoffs for the ChemProp2 scores based on your FDR-curve')
+                    overall_fdr_table, fig_histogram, fig_fdr = calculate_fdr(network_df, features_df, metadata_df, score_range=(-1, 1), bin_size=0.001)
+
+                     # Sample and blank selection interface
+                    c1, c2 = st.columns(2)
+                    c1.plotly_chart(fig_histogram)
+                    c2.plotly_chart(fig_fdr)
+                    
             ##########################
 
             st.markdown('### Scores Plot Visualization')
