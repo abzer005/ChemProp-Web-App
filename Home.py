@@ -172,7 +172,8 @@ st.write("""
 st.subheader('About the App Elements')
 st.markdown("""
 🔍 **How to Know If the App Is Running?**  
-Look at the **top-right corner** of the page. If you see the message **'RUNNING'**, the app is active and functioning as expected.  
+If you're performing a calculation or generating a figure and don't see any updates on the main page, 
+check the **top-right corner** of the page. If you see the message **'RUNNING'**, the app is active and processing your request.  
             
 💡 **All plots are interactive!**  
 - Use your mouse to select areas and zoom in on specific regions.  

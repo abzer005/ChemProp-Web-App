@@ -28,6 +28,12 @@ if 'md_for_analysis' in st.session_state and not st.session_state['md_for_analys
                 - Treatments: Select the metadata column that contains the treatment conditions (e.g., control and treatment groups). This category is optional.
                 - Replicates: Select the metadata column that contains the replicate information. This category is optional and will be used for plotting intensity trends.
                 """)
+    
+    st.markdown("""
+                <div style="color: #05577C; font-size: 20px;">
+                Select <b>only one metadata attribute</b> per checkbox column.
+                </div>""", 
+                unsafe_allow_html=True)
 
     # Add a new column for checkboxes (initialized to False)
     df['ChemProp1'] = False
@@ -255,6 +261,17 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
             st.dataframe(chemprop1_result_df)
             st.session_state['ChemProp1_scores'] = chemprop1_result_df
 
+            # Display only the row counts for both DataFrames
+            st.markdown(
+                f"""
+                <p style="color:red;">Number of edges in the original edge table: <b>{network_df.shape[0]}</b></p>
+                <p style="color:red;">Number of edges in the ChemProp1 edge table: <b>{chemprop1_result_df.shape[0]}</b></p>
+                """,
+                unsafe_allow_html=True)
+            
+            if network_df.shape[0] != chemprop1_result_df.shape[0]:
+                st.warning('The reduced number of edges might be due to the removal of blank entries.')
+
             # Allow users to download the results
             # Let the user input the filename (default value provided)
             user_filename = st.text_input("Enter the filename for the CSV and press Enter to apply the name:", 
@@ -448,15 +465,18 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
                                         ]
                                 
                                     available_columns = [col for col in plot_df.columns if col in allowed_columns]
-                                
-                                    # Let the user select which column to use as edge labels
-                                    edge_label_column = st.selectbox("Select column for edge labels:", options=available_columns)
 
+                                    # Let the user select which column to use as edge labels
+                                    edge_label_column = st.selectbox("Select column for edge labels:", 
+                                                                     options=available_columns,
+                                                                     help="To save the network image as PNG, right-click on the empty space and select 'Save image as'."
+                                    )
                                     # Generate the graph using the selected column, id1, and id2
                                     nodes, edges = generate_graph_from_df_chemprop1(plot_df, filtered_df, edge_label_column)
 
                                     # Define graph configuration
-                                    config = Config(width=800, height=600, 
+                                    config = Config(width=800, 
+                                                    height=600, 
                                                     directed=True, 
                                                     nodeHighlightBehavior=True, 
                                                     highlightColor="#F7A7A6", 
@@ -464,7 +484,7 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
                                                     node={'labelProperty': 'label'}, 
                                                     link={'labelProperty': 'label', 
                                                           'renderLabel': True},
-                                                    staticGraph=True)
+                                                    staticGraph=False)
 
                                     # Custom HTML legend with blue and red circles and text inside
                                     st.markdown("""
@@ -481,10 +501,11 @@ if 'nw' in st.session_state and 'chemprop1_ft' in st.session_state and 'chemprop
                                         </div>
                                     </div>
                                     """, unsafe_allow_html=True)
-
+                                    
                                     # Display the graph in Streamlit
                                     agraph(nodes=nodes, edges=edges, config=config)
-    
+
+                                    
                                 else:
                                     st.write("No ChemProp1 scores data available.")
 

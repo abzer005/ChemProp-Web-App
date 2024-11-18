@@ -309,6 +309,120 @@ def generate_graphml_zip_chemprop2():
                     mime='application/zip'
                 )
 
+
+def generate_graph_from_df_chemprop2(df, filtered_df, edge_label_column):
+    """
+    Generate nodes and edges from the DataFrame. The user can select a column to use as the edge label.
+    Color specific nodes based on CLUSTERID1 and CLUSTERID2 from filtered_df.
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing the node and edge data.
+    filtered_df (pd.DataFrame): The DataFrame containing a single row with CLUSTERID1 and CLUSTERID2.
+    edge_label_column (str): The name of the column from df to use as the label for the edges.
+    
+    Returns:
+    nodes, edges: Lists of nodes and edges for the graph.
+    """
+    nodes = []
+    edges = []
+    added_nodes = set()  # Set to track added nodes to avoid duplicates
+
+    # Get CLUSTERID1 and CLUSTERID2 from filtered_df
+    id1 = str(filtered_df['CLUSTERID1'].iloc[0])
+    id2 = str(filtered_df['CLUSTERID2'].iloc[0])
+
+    # Add the blue node for CLUSTERID1 if it hasn't been added
+    if id1 not in added_nodes:
+        nodes.append(Node(id=id1,
+                          label="Source",  # Adjust label if needed
+                          size=20, 
+                          color="blue",
+                          ))
+        added_nodes.add(id1)
+
+    # Add the red node for CLUSTERID2 if it hasn't been added
+    if id2 not in added_nodes:
+        nodes.append(Node(id=id2,
+                          label="Target",  # Adjust label if needed
+                          size=20, 
+                          color="red",
+                          ))
+        added_nodes.add(id2)
+
+    for _, row in df.iterrows():
+        clusterid1 = str(row['CLUSTERID1'])
+        clusterid2 = str(row['CLUSTERID2'])
+        abs_chemprop = row['abs_ChemProp2']
+        sign_chemprop2 = row['Sign_ChemProp2']
+        deltamz = row['DeltaMZ']
+        id1_name = row['ID1_name'] if 'ID1_name' in row else clusterid1
+        id2_name = row['ID2_name'] if 'ID2_name' in row else clusterid2
+        mz1 = row['ID1_mz']
+        mz2 = row['ID2_mz']
+        rt1 = row['ID1_RT']
+        rt2 = row['ID2_RT']
+
+        # Get the edge label from the user-selected column
+        edge_label_value = row[edge_label_column]
+
+        # Color node1 and node2 based on id1 and id2
+        color_1 = "blue" if clusterid1 == id1 else "lightgray"
+        color_2 = "lightgray" if clusterid2 != id2 else "red"
+
+        # color_1 = "blue" if clusterid1 == id1 else "lightgray"
+        # color_2 = "red" if clusterid2 == id2 else "lightgray"
+
+        # Add nodes if not already added
+        if clusterid1 not in added_nodes:
+            nodes.append(Node(id=clusterid1, 
+                              label=f"{mz1:.2f}", 
+                              size=20, 
+                              color=color_1,
+                              title=f"ID: {clusterid1}\n Name: {id1_name}\n m/z: {mz1}\n RT: {rt1}"))
+            added_nodes.add(clusterid1)
+        
+        if clusterid2 not in added_nodes:
+            nodes.append(Node(id=clusterid2,
+                              label=f"{mz2:.2f}",
+                              size=20, 
+                              color=color_2,
+                              title=f"ID: {clusterid2}\nName: {id2_name}\nm/z: {mz2}\nRT: {rt2}"))
+            added_nodes.add(clusterid2)
+
+        # Add edge with arrow based on abs_chemprop and sign_chemprop2
+        if abs_chemprop > 0:
+           if sign_chemprop2 == 1:
+               edges.append(Edge(source=clusterid1, 
+                                 target=clusterid2,label=f"{edge_label_value:.2f}", 
+                                 color="orange", 
+                                 arrow=True, 
+                                 font={"size": 10})
+                                 )
+                
+           elif sign_chemprop2 == -1:
+               edges.append(Edge(source=clusterid2, 
+                                 target=clusterid1, 
+                                 label=f"{edge_label_value:.2f}", 
+                                 color="orange", arrow=True, 
+                                 font={"size": 10})
+                                 )
+    
+    # Update the red node with the correct label and title information
+    for node in nodes:
+        if node.id == id1:
+            # Find the row in df with the correct information for id1
+            row = df[(df['CLUSTERID1'] == int(id1))].iloc[0]
+            node.label = f"{row['ID1_mz']:.2f}"
+            node.title = f"ID: {id1}\n Name: {row['ID1_name']}\n m/z: {row['ID1_mz']}\n RT: {row['ID1_RT']}"
+        if node.id == id2:
+            # Find the row in df with the correct information for id2
+            row = df[(df['CLUSTERID2'] == int(id2))].iloc[0]
+            node.label = f"{row['ID2_mz']:.2f}"
+            node.title = f"ID: {id2}\n Name: {row['ID2_name']}\n m/z: {row['ID2_mz']}\n RT: {row['ID2_RT']}"
+            break
+
+    return nodes, edges
+
+
 def calculate_fdr(edge_df, features_df, metadata_df, score_range=(-1, 1), bin_size=0.001):
     """
     Calculates a cutoff to set a false discovery rate (FDR) for correlation scores. A target-decoy approach 
@@ -389,10 +503,6 @@ def calculate_fdr(edge_df, features_df, metadata_df, score_range=(-1, 1), bin_si
     # Sort the combined_fdr_df by FDR values
     combined_fdr_df_sorted = combined_fdr_df.sort_values(by='FDR').reset_index(drop=True)
     combined_fdr_df_sorted['FDR'] *= 100
-
-    # Subset the table to include rows with FDR between 10 and 20
-    fdr_subset_df = combined_fdr_df_sorted[(combined_fdr_df_sorted['FDR'] >= 10) & (combined_fdr_df_sorted['FDR'] <= 20)]
-    #########################################
 
     # Loop through each threshold to add a horizontal line and highlight the closest point
     for fdr_value, color in zip(fdr_thresholds, colors):

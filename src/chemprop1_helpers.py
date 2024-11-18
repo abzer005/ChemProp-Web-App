@@ -152,9 +152,20 @@ def run_chemprop1_analysis(desired_network_table, desired_feature_table, chempro
             B1 = reordered_x.loc[reordered_x['Timepoint'] == timepoint1, 'Feature2']
             B2 = reordered_x.loc[reordered_x['Timepoint'] == timepoint2, 'Feature2']
 
-            # Calculate score with log ratio
-            k = 1  # Small constant to avoid division by zero
+            # Provide a constant k to avoid division by zero
+            if (
+                st.session_state['blank_removal_done'] == True 
+                and st.session_state['imputation_done'] == False 
+                and st.session_state['normalization_done'] == False
+            ):
+                k = 1e-10 #1.0 e−10
+            elif (
+                st.session_state['imputation_done'] == True 
+                or st.session_state['normalization_done'] == True
+            ):
+                k = 0
 
+            # Calculate score with log ratio
             top = ((A1 + k) / (B1 + k)).mean()
             bottom = (((A2 + k) / (B2 + k))).mean()
             ChemProp1[i] = np.log(top/bottom)
@@ -470,6 +481,15 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
     id1 = str(filtered_df['CLUSTERID1'].iloc[0])
     id2 = str(filtered_df['CLUSTERID2'].iloc[0])
 
+    # Add the blue node for CLUSTERID1 if it hasn't been added
+    if id1 not in added_nodes:
+        nodes.append(Node(id=id1,
+                          label="Source",  # Adjust label if needed
+                          size=20, 
+                          color="blue",
+                          ))
+        added_nodes.add(id1)
+
     # Add the red node for CLUSTERID2 if it hasn't been added
     if id2 not in added_nodes:
         nodes.append(Node(id=id2,
@@ -514,17 +534,34 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
                               color=color_2,
                               title=f"ID: {clusterid2}\n Name: {id2_name}\n m/z: {mz2}\n RT: {rt2}"))
             added_nodes.add(clusterid2)
-        
+
         # Add edge with arrow based on abs_chemprop and sign_chemprop2
         if abs_chemprop > 0:
            if sign_chemprop == 1:
-               edges.append(Edge(source=clusterid1, target=clusterid2,label=f"{edge_label_value:.2f}", color="orange", arrow=True, font={"size": 10}))
+               edges.append(Edge(source=clusterid1, 
+                                 target=clusterid2,
+                                 label=f"{edge_label_value:.2f}", 
+                                 color="orange", 
+                                 arrow=True, 
+                                 font={"size": 10})
+                                 )
                 
            elif sign_chemprop == -1:
-               edges.append(Edge(source=clusterid2, target=clusterid1, label=f"{edge_label_value:.2f}", color="orange", arrow=True, font={"size": 10}))
+               edges.append(Edge(source=clusterid2, 
+                                 target=clusterid1, 
+                                 label=f"{edge_label_value:.2f}", 
+                                 color="orange", 
+                                 arrow=True, 
+                                 font={"size": 10})
+                                 )
 
-    # Update the red node with the correct label and title information
+    # # Update the red node with the correct label and title information
     for node in nodes:
+        if node.id == id1:
+            # Find the row in df with the correct information for id1
+            row = df[(df['CLUSTERID1'] == int(id1))].iloc[0]
+            node.label = f"{row['ID1_mz']:.2f}"
+            node.title = f"ID: {id1}\n Name: {row['ID1_name']}\n m/z: {row['ID1_mz']}\n RT: {row['ID1_RT']}"
         if node.id == id2:
             # Find the row in df with the correct information for id2
             row = df[(df['CLUSTERID2'] == int(id2))].iloc[0]

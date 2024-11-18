@@ -425,7 +425,10 @@ if 'nw' in st.session_state and 'chemprop_ft' in st.session_state and 'chemprop_
                                     available_columns = [col for col in plot_df.columns if col in allowed_columns]
                                 
                                     # Let the user select which column to use as edge labels
-                                    edge_label_column = st.selectbox("Select column for edge labels:", options=available_columns)
+                                    edge_label_column = st.selectbox("Select column for edge labels:", 
+                                                                     options=available_columns,                                                                   
+                                                                     help="To save the network image as PNG, right-click on the empty space and select 'Save image as'."
+                                    )
 
                                     # Generate the graph using the selected column, id1, and id2
                                     nodes, edges = generate_graph_from_df_chemprop2(plot_df, filtered_df, edge_label_column)

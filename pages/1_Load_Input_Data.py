@@ -217,7 +217,12 @@ if (
 
          else:
              st.warning("You selected everything as sample type. Blank removal is not possible.")
-        
+         
+         st.session_state['blank_removal_done'] = True
+    else:
+         st.session_state['blank_removal_done'] = False    
+    
+    
     if not st.session_state['ft_for_analysis'].empty:
         cutoff_LOD = get_cutoff_LOD(st.session_state['ft_for_analysis'])
 
@@ -231,9 +236,13 @@ if (
                 st.dataframe(imputed_ft)
             
             st.session_state['ft_for_analysis'] = imputed_ft
-
         else:
             st.warning(f"Can't impute with random values between 1 and lowest value, which is {cutoff_LOD} (rounded).")
+        
+        st.session_state['imputation_done'] = True
+    else:
+        st.session_state['imputation_done'] = False
+
 
     perform_normalization = st.checkbox("Perform TIC normalization?", False)
     if perform_normalization:
@@ -245,6 +254,10 @@ if (
             st.dataframe(normalized_ft)
             
         st.session_state['ft_for_analysis'] = normalized_ft
+
+        st.session_state['normalization_done'] = True
+    else:
+        st.session_state['normalization_done'] = False
 else:
     # If data is not available, display a message
     st.warning("Data not loaded. Please load the data first.")
