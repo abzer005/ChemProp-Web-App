@@ -496,7 +496,7 @@ def calculate_fdr(edge_df, features_df, metadata_df, score_range=(-1, 1), bin_si
     ))
 
     # Define FDR threshold levels and their colors
-    fdr_thresholds = [10, 15, 20]
+    fdr_thresholds = [1, 5, 10]
     colors = ['green', 'orange', 'red']
 
     ########################################

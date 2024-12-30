@@ -555,7 +555,7 @@ def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
                                  font={"size": 10})
                                  )
 
-    # # Update the red node with the correct label and title information
+    # Update the red node with the correct label and title information
     for node in nodes:
         if node.id == id1:
             # Find the row in df with the correct information for id1
