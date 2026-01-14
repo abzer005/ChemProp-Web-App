@@ -44,8 +44,7 @@ if st.session_state["last_input_method"] != input_method:
 # ============================================================
 
 if input_method == "Use Example Dataset":
-    if all(st.session_state[k] is None for k in ["ft", "md", "nw", "an_gnps"]):
-        load_example()
+    load_example()
     show_input_tables_in_tabs()
     #st.stop()  # don't show uploaders below in this mode
 
