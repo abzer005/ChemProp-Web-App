@@ -1,7 +1,6 @@
 import streamlit as st
 from src.common import *
 import pandas as pd
-
 from streamlit.components.v1 import html
 
 page_setup()
@@ -9,13 +8,10 @@ page_setup()
 # Add a tracking token
 html('<script async defer data-website-id="74bc9983-13c4-4da0-89ae-b78209c13aaf" src="https://analytics.gnps2.org/umami.js"></script>', width=0, height=0)
 
-# Page Header
-#st.title("ChemProp2")
-
 try:
-    st.image("assets/ChemProp2.png", use_container_width=True)
+    st.image("assets/chemProp2_logo.png", caption="Chemprop2 Logo", use_container_width=True)
 except TypeError:
-    st.image("assets/ChemProp2.png", use_column_width=True)
+    st.image("assets/chemProp2_logo.png", caption="Chemprop2 Logo", use_column_width=True)
 
 # Introduction
 st.markdown("""
@@ -47,8 +43,8 @@ st.write("""
          3. **Edge File** from FBMN - This is essential for analyzing connections between node pairs (metabolites).
          4. **Annotation Files** (if available) from FBMN - These files provide additional context and annotation for the features in your dataset.
          
-         Instead of manually uploading these files, you can also provide your FBMN Job ID from GNPS2. 
-         This will allow ChemProp2 to directly retrieve and process the necessary data. To get an idea of how these tables should be structured, you can use the test data available on the ‘Load Input Data’ page.
+         **Instead of manually uploading these files, you can also provide your FBMN Job ID from GNPS2.**
+         This will allow ChemProp2 to directly retrieve and process the necessary data. To get an idea of how these tables should be structured, you can use the test data available on the ‘Load Input Data’ page. \n
          **Note:** FBMN jobs from GNPS1 are not supported. 
          """)
 

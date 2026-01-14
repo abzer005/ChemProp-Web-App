@@ -42,12 +42,6 @@ def load_example():
     st.session_state['nw'] = open_df("example-data/NetworkNodePairs.csv")
     st.session_state['an_gnps'] = open_df("example-data/GNPSannotations.tsv")
 
-    #st.session_state['ft'] = open_df("example-data/dummy_featuretable.csv").set_index("row ID")
-    #st.session_state['md'] = open_df("example-data/dummy_metadata.txt").set_index("filename")
-    #st.session_state['nw'] = open_df("example-data/dummy_edgetable.csv")
-    #st.session_state['an_gnps'] = open_df("example-data/GNPSannotations.tsv")
-
-
 #@st.cache_data  # Corrected cache decorator
 #def get_networkpairs_dataframe(task, gnps2=True):
 #    if gnps2:

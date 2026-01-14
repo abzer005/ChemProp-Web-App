@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import networkx as nx
 from streamlit_agraph import agraph, Node, Edge, Config
-
+import urllib.parse as up
 
 
 def subset_levels(metatable, feature_table):
@@ -201,79 +201,195 @@ def strip_non_numeric(val):
     return val  # If it's not a string (e.g., already numeric), return it as-is
 
 
-def add_names_to_chemprop(edge_df, gnps_df):
-    """
-    Adds 'ID1_name', 'ID2_name', 'ID1_mz', 'ID2_mz', 'ID1_RT', and 'ID2_RT' columns to the edge_df
-    by matching 'CLUSTERID1' and 'CLUSTERID2' with 'cluster index' in gnps_df and adding the 
-    corresponding 'Compound Name', 'parent mass', and 'RTMean' to the new columns.
+# def add_names_to_chemprop(edge_df, gnps_df):
+#     """
+#     Adds 'ID1_name', 'ID2_name', 'ID1_mz', 'ID2_mz', 'ID1_RT', and 'ID2_RT' columns to the edge_df
+#     by matching 'CLUSTERID1' and 'CLUSTERID2' with 'cluster index' in gnps_df and adding the 
+#     corresponding 'Compound Name', 'parent mass', and 'RTMean' to the new columns.
 
-    Args:
-        edge_df (pd.DataFrame): The ChemProp2_scores dataframe.
-        gnps_df (pd.DataFrame): The an_gnps dataframe.
+#     Args:
+#         edge_df (pd.DataFrame): The ChemProp2_scores dataframe.
+#         gnps_df (pd.DataFrame): The an_gnps dataframe.
 
-    Returns:
-        pd.DataFrame: The updated dataframe with the new columns added.
-    """
-    # Determine the column renaming based on the existing columns in gnps_df
-    if {'cluster index', 'parent mass', 'RTMean'}.issubset(gnps_df.columns):
-        gnps_df = gnps_df.rename(columns={'cluster index': 'CLUSTERID', 'parent mass': 'mz', 'RTMean': 'RT'})
-    elif {'#Scan#', 'Precursor_MZ', 'RT_Query'}.issubset(gnps_df.columns):
-        gnps_df = gnps_df.rename(columns={'#Scan#': 'CLUSTERID', 'Precursor_MZ': 'mz', 'RT_Query': 'RT'})
-        # 'RT' is not present, so we drop it if not available
-        if 'RT' in gnps_df.columns:
-            gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']]
-        else:
-            gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz']]
+#     Returns:
+#         pd.DataFrame: The updated dataframe with the new columns added.
+#     """
+#     # Determine the column renaming based on the existing columns in gnps_df
+#     if {'cluster index', 'parent mass', 'RTMean'}.issubset(gnps_df.columns):
+#         gnps_df = gnps_df.rename(columns={'cluster index': 'CLUSTERID', 'parent mass': 'mz', 'RTMean': 'RT'})
+#     elif {'#Scan#', 'Precursor_MZ', 'RT_Query'}.issubset(gnps_df.columns):
+#         gnps_df = gnps_df.rename(columns={'#Scan#': 'CLUSTERID', 'Precursor_MZ': 'mz', 'RT_Query': 'RT'})
+#         # 'RT' is not present, so we drop it if not available
+#         if 'RT' in gnps_df.columns:
+#             gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz', 'RT']]
+#         else:
+#             gnps_df = gnps_df[['CLUSTERID', 'Compound_Name', 'mz']]
 
-    # Verify required columns are in gnps_df after renaming
-    if 'Compound_Name' not in gnps_df.columns:
-        raise KeyError("The 'Compound_Name' column is missing from the annotation file. Check the input data.")
+#     # Verify required columns are in gnps_df after renaming
+#     if 'Compound_Name' not in gnps_df.columns:
+#         raise KeyError("The 'Compound_Name' column is missing from the annotation file. Check the input data.")
     
-    # Initialize the columns for mz and RT in edge_df based on gnps_df availability
-    cols_to_merge = ['CLUSTERID', 'Compound_Name']
-    if 'mz' in gnps_df.columns:
-        cols_to_merge.append('mz')
-    if 'RT' in gnps_df.columns:
-        cols_to_merge.append('RT')
+#     # Initialize the columns for mz and RT in edge_df based on gnps_df availability
+#     cols_to_merge = ['CLUSTERID', 'Compound_Name']
+#     if 'mz' in gnps_df.columns:
+#         cols_to_merge.append('mz')
+#     if 'RT' in gnps_df.columns:
+#         cols_to_merge.append('RT')
 
-    # Merge for CLUSTERID1
-    merged_df = edge_df.merge(gnps_df[cols_to_merge],
-                              left_on='CLUSTERID1',
-                              right_on='CLUSTERID',
-                              how='left')
-    # Rename columns from gnps_df to indicate they correspond to CLUSTERID1
-    rename_columns = {'Compound_Name': 'ID1_name'}
-    if 'mz' in gnps_df.columns:
-        rename_columns['mz'] = 'ID1_mz'
-    if 'RT' in gnps_df.columns:
-        rename_columns['RT'] = 'ID1_RT'
-    merged_df = merged_df.rename(columns=rename_columns)
-    merged_df = merged_df.drop(columns=['CLUSTERID'])
+#     # Merge for CLUSTERID1
+#     merged_df = edge_df.merge(gnps_df[cols_to_merge],
+#                               left_on='CLUSTERID1',
+#                               right_on='CLUSTERID',
+#                               how='left')
+#     # Rename columns from gnps_df to indicate they correspond to CLUSTERID1
+#     rename_columns = {'Compound_Name': 'ID1_name'}
+#     if 'mz' in gnps_df.columns:
+#         rename_columns['mz'] = 'ID1_mz'
+#     if 'RT' in gnps_df.columns:
+#         rename_columns['RT'] = 'ID1_RT'
+#     merged_df = merged_df.rename(columns=rename_columns)
+#     merged_df = merged_df.drop(columns=['CLUSTERID'])
 
-    # Merge for CLUSTERID2
-    merged_df = merged_df.merge(gnps_df[cols_to_merge],
-                                left_on='CLUSTERID2',
-                                right_on='CLUSTERID',
-                                how='left')
-    # Rename columns from gnps_df to indicate they correspond to CLUSTERID2
-    rename_columns = {'Compound_Name': 'ID2_name'}
-    if 'mz' in gnps_df.columns:
-        rename_columns['mz'] = 'ID2_mz'
-    if 'RT' in gnps_df.columns:
-        rename_columns['RT'] = 'ID2_RT'
-    merged_df = merged_df.rename(columns=rename_columns)
+#     # Merge for CLUSTERID2
+#     merged_df = merged_df.merge(gnps_df[cols_to_merge],
+#                                 left_on='CLUSTERID2',
+#                                 right_on='CLUSTERID',
+#                                 how='left')
+#     # Rename columns from gnps_df to indicate they correspond to CLUSTERID2
+#     rename_columns = {'Compound_Name': 'ID2_name'}
+#     if 'mz' in gnps_df.columns:
+#         rename_columns['mz'] = 'ID2_mz'
+#     if 'RT' in gnps_df.columns:
+#         rename_columns['RT'] = 'ID2_RT'
+#     merged_df = merged_df.rename(columns=rename_columns)
 
-    # Drop the extra 'CLUSTERID' column generated during merging
-    merged_df = merged_df.drop(columns=['CLUSTERID'], errors='ignore')
+#     # Drop the extra 'CLUSTERID' column generated during merging
+#     merged_df = merged_df.drop(columns=['CLUSTERID'], errors='ignore')
 
-    # If RT was not present in gnps_df, add 'ID1_RT' and 'ID2_RT' columns with zeros
-    if 'ID1_RT' not in merged_df.columns:
-        merged_df['ID1_RT'] = 0
-    if 'ID2_RT' not in merged_df.columns:
-        merged_df['ID2_RT'] = 0
+#     # If RT was not present in gnps_df, add 'ID1_RT' and 'ID2_RT' columns with zeros
+#     if 'ID1_RT' not in merged_df.columns:
+#         merged_df['ID1_RT'] = 0
+#     if 'ID2_RT' not in merged_df.columns:
+#         merged_df['ID2_RT'] = 0
 
-    return merged_df
+#     return merged_df
 
+def add_mz_rt_from_ft(
+    edge_df: pd.DataFrame,
+    ft_df: pd.DataFrame,
+    *,
+    id1_col: str = "CLUSTERID1",
+    id2_col: str = "CLUSTERID2",
+    ft_mz_col: str = "row m/z",
+    ft_rt_col: str = "row retention time",
+) -> pd.DataFrame:
+    """
+    Always add ID1_mz, ID1_RT, ID2_mz, ID2_RT from the feature table (ft_df).
+
+    Assumes:
+      - ft_df.index contains feature IDs (row ID)
+      - ft_df has columns `row m/z` and `row retention time`
+    """
+
+    # --- sanity checks ---
+    missing_edge = {id1_col, id2_col} - set(edge_df.columns)
+    if missing_edge:
+        raise KeyError(f"edge_df missing columns: {sorted(missing_edge)}")
+
+    missing_ft = {ft_mz_col, ft_rt_col} - set(ft_df.columns)
+    if missing_ft:
+        raise KeyError(f"ft_df missing columns: {sorted(missing_ft)}")
+
+    out = edge_df.copy()
+
+    # --- normalize IDs (string join is safest) ---
+    out[id1_col] = out[id1_col].astype("Int64").astype(str)
+    out[id2_col] = out[id2_col].astype("Int64").astype(str)
+
+    ft_meta = ft_df[[ft_mz_col, ft_rt_col]].copy()
+    ft_meta.index = ft_meta.index.astype("Int64").astype(str)
+
+    # --- merge ID1 ---
+    out = out.merge(
+        ft_meta.rename(columns={ft_mz_col: "ID1_mz", ft_rt_col: "ID1_RT"}),
+        how="left",
+        left_on=id1_col,
+        right_index=True,
+        validate="m:1",
+    )
+
+    # --- merge ID2 ---
+    out = out.merge(
+        ft_meta.rename(columns={ft_mz_col: "ID2_mz", ft_rt_col: "ID2_RT"}),
+        how="left",
+        left_on=id2_col,
+        right_index=True,
+        validate="m:1",
+    )
+
+    # --- add DeltaMZ if missing ---
+    if "DeltaMZ" not in out.columns:
+        out["DeltaMZ"] = (out["ID1_mz"] - out["ID2_mz"]).abs()
+
+    return out
+
+def add_names_from_gnps(
+    edge_df: pd.DataFrame,
+    gnps_df: pd.DataFrame,
+    *,
+    id1_col: str = "CLUSTERID1",
+    id2_col: str = "CLUSTERID2",
+) -> pd.DataFrame:
+    """
+    If gnps_df exists, add ID1_name and ID2_name from GNPS annotations.
+    Only names are added here (no mz/RT).
+    """
+    if gnps_df is None or not isinstance(gnps_df, pd.DataFrame) or gnps_df.empty:
+        return edge_df
+
+    out = edge_df.copy()
+
+    # Normalize GNPS schema -> columns: CLUSTERID, Compound_Name
+    g = gnps_df.copy()
+    if {"cluster index", "Compound_Name"}.issubset(g.columns):
+        g = g.rename(columns={"cluster index": "CLUSTERID"})
+    elif {"#Scan#", "Compound_Name"}.issubset(g.columns):
+        g = g.rename(columns={"#Scan#": "CLUSTERID"})
+    elif "CLUSTERID" not in g.columns:
+        raise KeyError("gnps_df must contain 'cluster index' or '#Scan#' (or already 'CLUSTERID').")
+
+    if "Compound_Name" not in g.columns:
+        raise KeyError("gnps_df is missing 'Compound_Name' column.")
+
+    g = g[["CLUSTERID", "Compound_Name"]].dropna(subset=["CLUSTERID"]).copy()
+
+    # Normalize join keys
+    out[id1_col] = out[id1_col].astype("Int64").astype(str)
+    out[id2_col] = out[id2_col].astype("Int64").astype(str)
+    g["CLUSTERID"] = g["CLUSTERID"].astype("Int64").astype(str)
+
+    # Deduplicate GNPS by cluster id (keep first name)
+    g = g.drop_duplicates(subset=["CLUSTERID"])
+
+    # Merge ID1 name
+    out = out.merge(
+        g.rename(columns={"CLUSTERID": "_GNPS_ID", "Compound_Name": "ID1_name"}),
+        how="left",
+        left_on=id1_col,
+        right_on="_GNPS_ID",
+        validate="m:1",
+    ).drop(columns=["_GNPS_ID"])
+
+    # Merge ID2 name
+    out = out.merge(
+        g.rename(columns={"CLUSTERID": "_GNPS_ID", "Compound_Name": "ID2_name"}),
+        how="left",
+        left_on=id2_col,
+        right_on="_GNPS_ID",
+        validate="m:1",
+    ).drop(columns=["_GNPS_ID"])
+
+    return out
 
 
 def generate_graphml_with_secondary_edges_chemprop1(df, output_file):
@@ -383,307 +499,804 @@ def generate_graphml_zip_chemprop1():
 
 def plot_intensity_trends_single_row_chemprop1(row, feature_table, metadata):
     """
-    Plots intensity trends for a single row containing CLUSTERID1 and CLUSTERID2,
-    where the x-axis represents unique timepoints from the metadata.
-
-    Parameters:
-    row (pd.Series): A single row from the DataFrame containing CLUSTERID1 and CLUSTERID2.
-    feature_table (pd.DataFrame): The feature table containing intensity values.
-    metadata (pd.DataFrame): The metadata containing timepoints (single column).
-    """
-
-    # Extract cluster IDs and relevant information from the row
-    clusterid1 = row['CLUSTERID1']
-    clusterid2 = row['CLUSTERID2']
-    name_id1 = row['ID1_name']
-    name_id2 = row['ID2_name']
-    chem_score = row['ChemProp1']
-
-    # Extract corresponding rows from feature_table for CLUSTERID1 and CLUSTERID2
-    if clusterid1 in feature_table.index and clusterid2 in feature_table.index:
-        intensity_1 = feature_table.loc[clusterid1]
-        intensity_2 = feature_table.loc[clusterid2]
-
-        # Align intensity data with the timepoints from the metadata
-        intensity_1_with_timepoints = pd.concat([intensity_1, metadata], axis=1)
-        intensity_2_with_timepoints = pd.concat([intensity_2, metadata], axis=1)
-
-        # Merge intensities based on timepoints
-        merged_total = pd.merge(intensity_1_with_timepoints,
-                                intensity_2_with_timepoints,
-                                left_index=True,
-                                right_index=True,
-                                suffixes=('_CLUSTERID1', '_CLUSTERID2'))
-
-        # Ensure all column names are strings to safely apply 'endswith'
-        merged_total.columns = merged_total.columns.map(str)
-
-        # Dropping columns that end with '_CLUSTERID1' from the dataframe
-        merged_total = merged_total.drop(columns=[col for col in merged_total.columns if col.endswith('_CLUSTERID1')])
-
-        # Convert data to long format for plotting
-        long_df = pd.melt(merged_total, 
-                          id_vars=[merged_total.columns[2]], 
-                          value_vars=[merged_total.columns[0], 
-                                      merged_total.columns[1]], 
-                                      var_name='Feature', 
-                                      value_name='Value'
-                          )
-        
-        long_df['Feature'] = 'Feature_' + long_df['Feature'].astype(str)
-        long_df.rename(columns={long_df.columns[0]: 'Timepoint'}, inplace=True)
-        long_df['Timepoint'] = long_df['Timepoint'].astype(str)
-
-        # Create box plot without mean lines
-        fig = px.box(
-            long_df,
-            x='Timepoint',  # X-axis for time points
-            y='Value',  # Y-axis for the intensity values of both features
-            color='Feature',  # Color by 'Feature' to distinguish Feature1 and Feature2
-            template="plotly_white",
-            title=f"Intensity Trend Box Plot {clusterid1} vs {clusterid2}",
-            labels={'Timepoint': 'Time', 'Value': 'Feature Intensity'},
-            width=800,
-            height=600,
-            points="all",
-        )
-
-        # Add subtitle for ChemProp2 score using annotation
-        fig.add_annotation(
-           text=f"ChemProp1 score = {chem_score:.2f}<br>{name_id1} <b>VS</b> {name_id2}",
-           xref="paper", yref="paper",
-           x=0.5, y=1.1,  # Positioning the subtitle above the plot
-           showarrow=False,
-           font=dict(size=12)
-        )
-
-        # Return the Plotly figure object
-        return fig
-
-def generate_graph_from_df_chemprop1(df, filtered_df, edge_label_column):
-    """
-    Generate nodes and edges from the DataFrame. The user can select a column to use as the edge label.
-    Color specific nodes based on CLUSTERID1 and CLUSTERID2 from filtered_df.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame containing the node and edge data.
-    filtered_df (pd.DataFrame): The DataFrame containing a single row with CLUSTERID1 and CLUSTERID2.
-    edge_label_column (str): The name of the column from df to use as the label for the edges.
-    
     Returns:
-    nodes, edges: Lists of nodes and edges for the graph.
+        fig (plotly.graph_objects.Figure)
+        status (dict): info about missing data / issues
     """
+    status = {
+        "missing_ids": [],
+        "no_overlap_samples": False,
+        "metadata_missing": False,
+    }
+
+    clusterid1 = row.get("CLUSTERID1", None)
+    clusterid2 = row.get("CLUSTERID2", None)
+
+    fig = go.Figure()
+    fig.update_layout(template="plotly_white", width=800, height=600)
+
+    if clusterid1 is None or clusterid2 is None:
+        status["missing_ids"] = ["CLUSTERID1/CLUSTERID2"]
+        fig.add_annotation(text="Missing CLUSTER IDs.", showarrow=False)
+        return fig, status
+
+    # normalize index
+    ft = feature_table.copy()
+    ft.index = ft.index.astype(str)
+    id1 = str(int(clusterid1))
+    id2 = str(int(clusterid2))
+
+    if id1 not in ft.index:
+        status["missing_ids"].append(clusterid1)
+    if id2 not in ft.index:
+        status["missing_ids"].append(clusterid2)
+
+    if status["missing_ids"]:
+        fig.add_annotation(
+            text=f"Feature(s) not found in feature table: {status['missing_ids']}",
+            xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False
+        )
+        return fig, status
+
+    if metadata is None or metadata.empty:
+        status["metadata_missing"] = True
+        fig.add_annotation(text="Metadata is missing.", showarrow=False)
+        return fig, status
+
+    time_col = "Timepoint" if "Timepoint" in metadata.columns else metadata.columns[0]
+
+    common_samples = ft.columns.intersection(metadata.index)
+    if len(common_samples) == 0:
+        status["no_overlap_samples"] = True
+        fig.add_annotation(
+            text="No overlapping samples between feature table and metadata.",
+            showarrow=False
+        )
+        return fig, status
+
+    label1 = f"ID {clusterid1}"
+    label2 = f"ID {clusterid2}"
+
+    df = pd.DataFrame({
+        "Timepoint": metadata.loc[common_samples, time_col].astype(str).values,
+        label1: ft.loc[id1, common_samples].values,
+        label2: ft.loc[id2, common_samples].values,
+    })
+
+    long_df = df.melt(
+        id_vars="Timepoint",
+        value_vars=[label1, label2],
+        var_name="Feature",
+        value_name="Value"
+    )
+
+    color_map = {
+        label1: "blue",  # blue
+        label2: "#d62728",  # red
+    }
+
+    fig = px.box(
+        long_df,
+        x="Timepoint",
+        y="Value",
+        color="Feature",
+        color_discrete_map=color_map,
+        template="plotly_white",
+        title=f"Intensity Trend Box Plot {clusterid1} vs {clusterid2}",
+        labels={"Timepoint": "Time", "Value": "Feature Intensity"},
+        points="all",
+    )
+
+    score = row.get("ChemProp1", np.nan)
+    name1 = row.get("ID1_name", "")
+    name2 = row.get("ID2_name", "")
+
+    fig.add_annotation(
+        text=f"ChemProp1 score = {'NA' if pd.isna(score) else f'{score:.2f}'}<br>"
+             f"{name1} <b>VS</b> {name2}",
+        xref="paper", yref="paper",
+        x=0.5, y=1.1,
+        showarrow=False,
+    )
+
+    return fig, status
+
+
+
+def generate_graph_from_df_chemprop1(df: pd.DataFrame, filtered_df: pd.DataFrame, edge_label_column: str):
+    """
+    Build nodes/edges for streamlit-agraph from ChemProp1 score dataframe.
+
+    - Creates one node per unique cluster id in df (and ensures source/target are present)
+    - Node label: m/z (2 decimals) when available, otherwise the cluster id
+    - Node title: id, name, m/z, RT (best-effort)
+    - Colors: source=blue, target=red, others=lightgray
+    - Edges: direction based on Sign_ChemProp1 when abs_ChemProp1 > 0
+    """
+
     nodes = []
     edges = []
-    added_nodes = set()  # Set to track added nodes to avoid duplicates
+    added = set()
 
-    # Get CLUSTERID1 and CLUSTERID2 from filtered_df
-    id1 = str(filtered_df['CLUSTERID1'].iloc[0])
-    id2 = str(filtered_df['CLUSTERID2'].iloc[0])
+    if filtered_df is None or filtered_df.empty:
+        return nodes, edges
 
-    # Add the blue node for CLUSTERID1 if it hasn't been added
-    if id1 not in added_nodes:
-        nodes.append(Node(id=id1,
-                          label="Source",  # Adjust label if needed
-                          size=20, 
-                          color="blue",
-                          ))
-        added_nodes.add(id1)
+    # Normalize source/target ids as strings (agraph node ids are strings)
+    source_id = str(filtered_df["CLUSTERID1"].iloc[0])
+    target_id = str(filtered_df["CLUSTERID2"].iloc[0])
 
-    # Add the red node for CLUSTERID2 if it hasn't been added
-    if id2 not in added_nodes:
-        nodes.append(Node(id=id2,
-                          label="Target",  # Adjust label if needed
-                          size=20, 
-                          color="red",
-                          ))
-        added_nodes.add(id2)
+    # Work on a copy; normalize id columns to string for consistent comparisons
+    df2 = df.copy()
+    df2["CLUSTERID1"] = df2["CLUSTERID1"].astype(str)
+    df2["CLUSTERID2"] = df2["CLUSTERID2"].astype(str)
 
-    for _, row in df.iterrows():
-        clusterid1 = str(row['CLUSTERID1'])
-        clusterid2 = str(row['CLUSTERID2'])
-        abs_chemprop = row['abs_ChemProp1']
-        sign_chemprop = row['Sign_ChemProp1']
-        id1_name = row['ID1_name'] if 'ID1_name' in row else clusterid1
-        id2_name = row['ID2_name'] if 'ID2_name' in row else clusterid2
-        mz1 = row['ID1_mz']
-        mz2 = row['ID2_mz']
-        rt1 = row['ID1_RT']
-        rt2 = row['ID2_RT']
+    # Build neighbor map (cluster id -> neighbor cluster id)
+    neighbor_map = {}
+    if "Neighbor" in df2.columns:
+        tmp = df2[["CLUSTERID2", "Neighbor"]].dropna()
+        tmp["CLUSTERID2"] = tmp["CLUSTERID2"].astype(str)
 
-        # Get the edge label from the user-selected column
-        edge_label_value = row[edge_label_column]
+        # If duplicates exist, keep the smallest neighbor distance
+        tmp["Neighbor"] = pd.to_numeric(tmp["Neighbor"], errors="coerce")
+        neighbor_map = tmp.groupby("CLUSTERID2")["Neighbor"].min().to_dict()
 
-        # Color node1 and node2 based on id1 and id2
-        color_1 = "blue" if clusterid1 == id1 else "lightgray"
-        color_2 = "lightgray" if clusterid2 != id2 else "red"
+    # Helper: add node once with best-available metadata
+    def add_node(node_id: str, mz=None, rt=None, name=None, color="lightgray", neighbor=None):
+        if node_id in added:
+            return
 
-        # Add nodes if not already added
-        if clusterid1 not in added_nodes:
-            nodes.append(Node(id=clusterid1, 
-                              label=f"{mz1:.2f}", 
-                              size=20, 
-                              color=color_1,
-                              title=f"ID: {clusterid1}\n Name: {id1_name}\n m/z: {mz1}\n RT: {rt1}"))
-            added_nodes.add(clusterid1)
-        
-        if clusterid2 not in added_nodes:
-            nodes.append(Node(id=clusterid2,
-                              label=f"{mz2:.2f}",
-                              size=20, 
-                              color=color_2,
-                              title=f"ID: {clusterid2}\n Name: {id2_name}\n m/z: {mz2}\n RT: {rt2}"))
-            added_nodes.add(clusterid2)
+        label = f"{mz:.2f}" if pd.notna(mz) else node_id
 
-        # Add edge with arrow based on abs_chemprop and sign_chemprop2
-        if abs_chemprop > 0:
-           if sign_chemprop == 1:
-               edges.append(Edge(source=clusterid1, 
-                                 target=clusterid2,
-                                 label=f"{edge_label_value:.2f}", 
-                                 color="orange", 
-                                 arrow=True, 
-                                 font={"size": 10})
-                                 )
-                
-           elif sign_chemprop == -1:
-               edges.append(Edge(source=clusterid2, 
-                                 target=clusterid1, 
-                                 label=f"{edge_label_value:.2f}", 
-                                 color="orange", 
-                                 arrow=True, 
-                                 font={"size": 10})
-                                 )
+        title_parts = [f"ID: {node_id}"]
+        if pd.notna(name) and str(name).strip().lower() != "nan":
+            title_parts.append(f"Name: {name}")
+        if pd.notna(mz):
+            title_parts.append(f"m/z: {mz}")
+        if pd.notna(rt):
+            title_parts.append(f"RT: {rt}")
 
-    # Update the red node with the correct label and title information
-    for node in nodes:
-        if node.id == id1:
-            # Find the row in df with the correct information for id1
-            row = df[(df['CLUSTERID1'] == int(id1))].iloc[0]
-            node.label = f"{row['ID1_mz']:.2f}"
-            node.title = f"ID: {id1}\n Name: {row['ID1_name']}\n m/z: {row['ID1_mz']}\n RT: {row['ID1_RT']}"
-        if node.id == id2:
-            # Find the row in df with the correct information for id2
-            row = df[(df['CLUSTERID2'] == int(id2))].iloc[0]
-            node.label = f"{row['ID2_mz']:.2f}"
-            node.title = f"ID: {id2}\n Name: {row['ID2_name']}\n m/z: {row['ID2_mz']}\n RT: {row['ID2_RT']}"
-            break
+        # only add if neighbor was passed
+        if neighbor is not None and pd.notna(neighbor):
+            title_parts.append(f"Neighbor: {int(neighbor)}")
+        title = "\n".join(title_parts)
+
+        nodes.append(Node(
+            id=node_id,
+            label=label,
+            size=20,
+            color=color,
+            title=title
+        ))
+        added.add(node_id)
+
+    # 1) Build a metadata lookup for any node id from either side of edges
+    #    First occurrence wins (good enough for mz/rt/name)
+    meta = {}
+    for _, r in df2.iterrows():
+        a = r["CLUSTERID1"]
+        b = r["CLUSTERID2"]
+
+        # Side A metadata
+        if a not in meta:
+            meta[a] = {
+                "mz": r.get("ID1_mz", pd.NA),
+                "rt": r.get("ID1_RT", pd.NA),
+                "name": r.get("ID1_name", pd.NA),
+            }
+        # Side B metadata
+        if b not in meta:
+            meta[b] = {
+                "mz": r.get("ID2_mz", pd.NA),
+                "rt": r.get("ID2_RT", pd.NA),
+                "name": r.get("ID2_name", pd.NA),
+            }
+
+    # Ensure source/target are present in meta (even if not found)
+    meta.setdefault(source_id, {"mz": pd.NA, "rt": pd.NA, "name": pd.NA})
+    meta.setdefault(target_id, {"mz": pd.NA, "rt": pd.NA, "name": pd.NA})
+
+    # 2) Add nodes (all unique ids)
+    # Color rule: source blue, target red, others lightgray
+    for node_id, m in meta.items():
+        color = "blue" if node_id == source_id else ("red" if node_id == target_id else "lightgray")
+        nb = neighbor_map.get(node_id, None)
+        add_node(node_id, mz=m.get("mz"), rt=m.get("rt"), name=m.get("name"), color=color, neighbor=nb)
+
+    # 3) Add edges
+    #    - label = selected edge_label_column (best-effort formatting)
+    #    - direction based on Sign_ChemProp1 (1: a->b, -1: b->a)
+    for _, r in df2.iterrows():
+        a = r["CLUSTERID1"]
+        b = r["CLUSTERID2"]
+
+        abs_cp = r.get("abs_ChemProp1", 0)
+        sign = r.get("Sign_ChemProp1", 0)
+
+        # Skip if abs score is missing/zero/NaN
+        if pd.isna(abs_cp) or float(abs_cp) <= 0:
+            continue
+
+        # Edge label
+        val = r.get(edge_label_column, "")
+        if pd.isna(val):
+            label = ""
+        else:
+            # try numeric formatting, otherwise string
+            try:
+                label = f"{float(val):.2f}"
+            except Exception:
+                label = str(val)
+
+        if sign == 1:
+            src, tgt = a, b
+        elif sign == -1:
+            src, tgt = b, a
+        else:
+            # if sign missing, default a->b
+            src, tgt = a, b
+
+        edges.append(Edge(
+            source=src,
+            target=tgt,
+            label=label,
+            color="orange",
+            arrow=True,
+            font={"size": 10},
+        ))
 
     return nodes, edges
 
 
-# def plot_intensity_trends_single_row_chemprop1(row, feature_table, metadata):
-#     """
-#     Plots intensity trends for a single row containing CLUSTERID1 and CLUSTERID2,
-#     where the x-axis represents unique timepoints from the metadata.
+def get_inputs_from_state():
+    required = ["nw", "chemprop1_ft", "chemprop1_md"]
+    if not all(k in st.session_state for k in required):
+        return None
 
-#     Parameters:
-#     row (pd.Series): A single row from the DataFrame containing CLUSTERID1 and CLUSTERID2.
-#     feature_table (pd.DataFrame): The feature table containing intensity values.
-#     metadata (pd.DataFrame): The metadata containing timepoints (single column).
-#     """
-#     # Extract cluster IDs and relevant information from the row
-#     clusterid1 = row['CLUSTERID1']
-#     clusterid2 = row['CLUSTERID2']
-#     name_id1 = row['ID1_name']
-#     name_id2 = row['ID2_name']
-#     chem_score = row['ChemProp1']
+    network_df = st.session_state["nw"].copy()
+    features_df = st.session_state["chemprop1_ft"].copy()
+    metadata_df = st.session_state["chemprop1_md"].copy()
 
-#     # Extract corresponding rows from feature_table for CLUSTERID1 and CLUSTERID2
-#     if clusterid1 in feature_table.index and clusterid2 in feature_table.index:
-#         intensity_1 = feature_table.loc[clusterid1]
-#         intensity_2 = feature_table.loc[clusterid2]
+    if network_df.empty or features_df.empty or metadata_df.empty:
+        return None
+    
+    return network_df, features_df, metadata_df
 
-#         # Align intensity data with the timepoints from the metadata
-#         intensity_1_with_timepoints = pd.concat([intensity_1, metadata], axis=1)
-#         intensity_2_with_timepoints = pd.concat([intensity_2, metadata], axis=1)
+def chemprop1_controls():
+    if "run_chemprop1" not in st.session_state:
+        st.session_state.run_chemprop1 = False
 
-#         # Merge intensities based on timepoints
-#         merged_total = pd.merge(intensity_1_with_timepoints,
-#                                 intensity_2_with_timepoints,
-#                                 left_index=True,
-#                                 right_index=True,
-#                                 suffixes=('_CLUSTERID1', '_CLUSTERID2'))
+    show_options = st.checkbox("Run ChemProp1 score calculation", value=False)
+    st.session_state.run_chemprop1 = bool(show_options)
 
-#         # Ensure all column names are strings to safely apply 'endswith'
-#         merged_total.columns = merged_total.columns.map(str)
+    if not show_options:
+        return False, None
 
-#         # Dropping columns that end with '_CLUSTERID1' from the dataframe
-#         merged_total = merged_total.drop(columns=[col for col in merged_total.columns if col.endswith('_CLUSTERID1')])
+    mode = st.radio(
+        "Run ChemProp1 on:",
+        ("Provided Edge Table", "Cascade edges", "User defined edge"),
+        horizontal=True,
+        key="chemprop1_mode"
+    )
 
-#         # Group by timepoints and calculate the average intensity for each timepoint
-#         intensity_1_grouped = intensity_1_with_timepoints.groupby(metadata.columns[0]).mean()
-#         intensity_2_grouped = intensity_2_with_timepoints.groupby(metadata.columns[0]).mean()
+    return True, mode
 
-#         # Merge the two grouped DataFrames by index (timepoints)
-#         mean_intensities = pd.merge(intensity_1_grouped, 
-#                                     intensity_2_grouped, 
-#                                     left_index=True, 
-#                                     right_index=True, 
-#                                     suffixes=('_CLUSTERID1', '_CLUSTERID2'))
 
-#         # Reset the index if 'Timepoint' is currently the row index
-#         mean_intensities = mean_intensities.reset_index()
+def run_chemprop1_pipeline(network_df, features_df, metadata_df):
+    
+    chemprop1_df = run_chemprop1_analysis(network_df, features_df, metadata_df)
 
-#         # Ensure there are exactly 3 columns to rename
-#         if mean_intensities.shape[1] == 3:
-#             mean_intensities = mean_intensities.rename(columns={
-#                 mean_intensities.columns[0]: 'Timepoint',  # Rename the first column to 'Timepoint'
-#                 mean_intensities.columns[1]: 'Feature1',   # Rename the second column to 'Feature1'
-#                 mean_intensities.columns[2]: 'Feature2'    # Rename the third column to 'Feature2'
-#             })
+    if chemprop1_df is None or chemprop1_df.empty:
+        return None
 
-#         # Convert data to long format for plotting
-#         long_df = pd.melt(merged_total, 
-#                           id_vars=[merged_total.columns[2]], 
-#                           value_vars=[merged_total.columns[0], 
-#                                       merged_total.columns[1]], 
-#                                       var_name='Feature', 
-#                                       value_name='Value'
-#                           )
-        
-#         long_df['Feature'] = 'Feature_' + long_df['Feature'].astype(str)
-#         long_df.rename(columns={long_df.columns[0]: 'Timepoint'}, inplace=True)
+    chemprop1_df = drop_blank_score_rows(chemprop1_df, base_cols=network_df.shape[1])
+    chemprop1_df = add_mz_rt_from_ft(chemprop1_df, st.session_state["ft"])
 
-#         # Create scatter plot with lines connecting the points
-#         fig = px.scatter(
-#             long_df,
-#             x='Timepoint',  # X-axis for time points
-#             y='Value',  # Y-axis for the intensity values of both features
-#             color='Feature',  # Color by 'Feature' to distinguish Feature1 and Feature2
-#             template="plotly_white",
-#             title=f"Intensity Trend Plot {clusterid1} vs {clusterid2}",
-#             labels={'Timepoint': 'Time', 'Value': 'Feature Intensity'},  # Ensure 'Timepoint' label matches your DataFrame
-#             width=800,
-#             height=600,
-#         )
+    # Add names if GNPS annotations exist
+    if "an_gnps" in st.session_state and isinstance(st.session_state["an_gnps"], pd.DataFrame):
+        gnps_df = st.session_state["an_gnps"]
+        if not gnps_df.empty:
+            chemprop1_df = add_names_from_gnps(chemprop1_df, gnps_df)
 
-#         # Add mean lines for Feature1 and Feature2
-#         fig.add_scatter(
-#             x=mean_intensities['Timepoint'], 
-#             y=mean_intensities['Feature1'], 
-#             mode='lines', 
-#             name=f"Mean {clusterid1}",  # Label for the mean line of Feature1
-#             line=dict(color='blue', dash='dash')  # Customize color and style of the line
-#         )
+    st.session_state["ChemProp1_scores"] = chemprop1_df
+    st.write(
+        f"ChemProp1 Scoring Results " 
+        f"({chemprop1_df.shape[0]} rows × {chemprop1_df.shape[1]} columns):"
+        )
+    st.dataframe(chemprop1_df, hide_index=True, use_container_width=True)
+    return chemprop1_df
 
-#         fig.add_scatter(
-#             x=mean_intensities['Timepoint'], 
-#             y=mean_intensities['Feature2'], 
-#             mode='lines', 
-#             name=f"Mean {clusterid2}",  # Label for the mean line of Feature2
-#             line=dict(color='red', dash='dash')  # Customize color and style of the line
-#         )
 
-#         # Add subtitle for ChemProp2 score using annotation
-#         fig.add_annotation(
-#            text=f"ChemProp1 score = {chem_score:.2f}<br>{name_id1} <b>VS</b> {name_id2}",
-#            xref="paper", yref="paper",
-#            x=0.5, y=1.1,  # Positioning the subtitle above the plot
-#            showarrow=False,
-#            font=dict(size=12)
-#         )
+def drop_blank_score_rows(df, base_cols: int):
+    # Keep everything in the original edge table + drop rows where all extra cols are NaN
+    extra_cols = df.columns[base_cols:]
+    if len(extra_cols) == 0:
+        return df
+    return df.dropna(subset=extra_cols, how="all")
 
-#         # Return the Plotly figure object
-#         return fig
+##########################################
+from collections import defaultdict, deque
+
+def build_cascade_edges(
+    edges: pd.DataFrame,
+    source_id: int,
+    max_neighbor: int = 15,
+    col1: str = "CLUSTERID1",
+    col2: str = "CLUSTERID2",
+    component_col: str = "ComponentIndex",
+) -> pd.DataFrame:
+    """
+    Build a cascade edge table from an undirected edge list.
+
+    - Finds ComponentIndex group(s) containing `source_id`
+    - Restricts to those components
+    - BFS from source up to `max_neighbor` hops
+    - Returns one row per reached node with hop distance in 'Neighbor'
+
+    Output columns: CLUSTERID1 (source), CLUSTERID2 (node), Neighbor, ComponentIndex
+    """
+
+    required = {col1, col2, component_col}
+    missing = required - set(edges.columns)
+    if missing:
+        raise ValueError(f"Edge table missing required columns: {sorted(missing)}")
+
+    # Ensure numeric ids (but keep NaNs out)
+    df = edges[[col1, col2, component_col]].copy()
+    df = df.dropna(subset=[col1, col2, component_col])
+
+    # Identify which components contain the source
+    in_rows = df[(df[col1] == source_id) | (df[col2] == source_id)]
+    if in_rows.empty:
+        # Return empty with correct schema
+        return pd.DataFrame(columns=[col1, col2, "Neighbor", component_col])
+
+    source_components = sorted(in_rows[component_col].unique().tolist())
+
+    # Restrict to those components
+    df = df[df[component_col].isin(source_components)].copy()
+
+    # Build adjacency per component
+    # adj[component][node] -> set(neighbors)
+    adj = defaultdict(lambda: defaultdict(set))
+    for a, b, comp in zip(df[col1].tolist(), df[col2].tolist(), df[component_col].tolist()):
+        adj[comp][a].add(b)
+        adj[comp][b].add(a)
+
+    # BFS per component, then combine results
+    out_rows = []
+    for comp in source_components:
+        if source_id not in adj[comp]:
+            continue
+
+        visited = {source_id: 0}
+        q = deque([source_id])
+
+        while q:
+            u = q.popleft()
+            du = visited[u]
+            if du == max_neighbor:
+                continue
+            for v in adj[comp].get(u, []):
+                if v not in visited:
+                    visited[v] = du + 1
+                    q.append(v)
+
+        # Add reached nodes except source itself
+        for node, dist in visited.items():
+            if node == source_id:
+                continue
+            if 1 <= dist <= max_neighbor:
+                out_rows.append({
+                    col1: source_id,          # source
+                    col2: node,               # reached node
+                    "Neighbor": dist,         # hop distance
+                    component_col: comp
+                })
+
+    # Create final table (deduplicate in case a node is reachable in multiple components)
+    out = pd.DataFrame(out_rows)
+    if out.empty:
+        return pd.DataFrame(columns=[col1, col2, "Neighbor", component_col])
+
+    out = out.sort_values([component_col, "Neighbor", col2]).drop_duplicates(
+        subset=[col1, col2, component_col], keep="first"
+    ).reset_index(drop=True)
+
+    return out
+
+def render_results_summary(network_df, result_df):
+
+    st.info(
+        f"""
+    **Edge Filtering Summary**
+
+    - 📊 **Original edge table:** {network_df.shape[0]} edges  
+    - 🧹 **ChemProp2 edge table:** {result_df.shape[0]} edges
+    """
+    )
+  
+    if network_df.shape[0] != result_df.shape[0]:
+        st.warning("The reduced number of edges might be due to the removal of blank entries.")
+
+
+def render_download_buttons(result_df):
+    user_filename = st.text_input(
+        "Enter the filename for the CSV and press Enter to apply the name:",
+        value="chemprop1_scores_results.csv",
+    )
+    if not user_filename.endswith(".csv"):
+        user_filename += ".csv"
+
+    data_csv = result_df.to_csv(index=False).encode("utf-8")
+
+    col1, col2, col3, _ = st.columns([1.1, 1, 1, 4.9])
+
+    with col1:
+        st.download_button(
+            label="Download Results as CSV",
+            data=data_csv,
+            file_name=user_filename,
+            mime="text/csv",
+        )
+
+    with col2:
+        # remove the __name__ guard in Streamlit; it’s not needed
+        if st.button("Download GraphML (ZIP)"):
+            generate_graphml_zip_chemprop1()
+
+    with col3:
+        gnps_task_id = st.session_state.get("gnps_task_id")
+
+        if gnps_task_id:
+            gnps_url = (
+                "https://www.gnps2.org/dashboards/networkviewer/"
+                f"?usi=mzdata%3AGNPS2%3ATASK-{gnps_task_id}-nf_output%2Fnetworking%2Fnetwork.graphml"
+                f"&usi-mgf=mzdata%3AGNPS2%3ATASK-{gnps_task_id}-nf_output%2Fclustering%2Fspectra_reformatted.mgf#{{}}"
+            )
+
+            st.link_button(
+                "Visualize Network in GNPS2",
+                gnps_url,
+                type="primary",
+            )
+        else:
+            st.info("ℹ️ GNPS task ID not available for network visualization.")
+
+
+def render_scores_plot(scores_df):
+    df = scores_df.copy()
+    df["CLUSTER IDs"] = df["CLUSTERID1"].astype(str) + "-" + df["CLUSTERID2"].astype(str)
+
+    fig = px.scatter(
+        df,
+        x="DeltaMZ",
+        y="ChemProp1",
+        hover_name="CLUSTER IDs",
+        title="Scatter Plot: DeltaMZ vs ChemProp1 scores",
+        labels={"DeltaMZ": "Delta M/Z", "ChemProp1": "ChemProp1 scores"},
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def render_filters_and_plots(scores_df, features_df, metadata_df):
+    if scores_df is None or scores_df.empty:
+        return
+
+    if not st.checkbox("Show Filters", key="show_filters_chemprop"):
+        return
+    
+    if scores_df.shape[0] == 1:
+        filtered_df = scores_df.copy()
+    
+    else:
+        df = scores_df.copy()
+        df["CLUSTER IDs"] = df["CLUSTERID1"].astype(str) + "-" + df["CLUSTERID2"].astype(str)
+
+        filter_mode = st.radio(
+            "Filter type:",
+            ("Filter by Score", "Filter by M/Z Range", "Filter by Name", "Filter by Cluster ID"),
+            horizontal=True,
+        )
+
+        filtered_df = get_filtered_edges_ui(df, filter_mode)
+        st.dataframe(filtered_df, hide_index=True, use_container_width=True)
+    render_edge_detail_plots(filtered_df, scores_df, features_df, metadata_df)
+    if (st.session_state.get("gnps_task_id") or "").strip():
+        render_spectra_modifinder(filtered_df, st.session_state.get("an_gnps"))
+
+
+def get_filtered_edges_ui(df, filter_mode):
+    c1, c2, c3 = st.columns(3)
+
+    if filter_mode == "Filter by Score":
+        with c1:
+            score_min = st.number_input("Min Score:", value=float(df["ChemProp1"].min()))
+        with c2:
+            score_max = st.number_input("Max Score:", value=float(df["ChemProp1"].max()))
+
+        sub = df[(df["ChemProp1"] >= score_min) & (df["ChemProp1"] <= score_max)].copy()
+
+        with c3:
+            if sub.empty:
+                st.warning("No edges in this score range.")
+                return sub
+            sub["Dropdown_Display"] = (
+                "ID: " + sub["CLUSTER IDs"].astype(str) + ", Score: " + sub["ChemProp1"].round(3).astype(str)
+            )
+            choice = st.selectbox("Select the edge to view plots", sub["Dropdown_Display"].tolist())
+            return sub[sub["Dropdown_Display"] == choice].drop(columns=["Dropdown_Display"])
+
+    if filter_mode == "Filter by M/Z Range":
+        with c1:
+            mz_min = st.number_input("Min DeltaMZ:", value=float(df["DeltaMZ"].min()))
+        with c2:
+            mz_max = st.number_input("Max DeltaMZ:", value=float(df["DeltaMZ"].max()))
+
+        sub = df[(df["DeltaMZ"] >= mz_min) & (df["DeltaMZ"] <= mz_max)].copy()
+
+        with c3:
+            if sub.empty:
+                st.warning("No edges in this DeltaMZ range.")
+                return sub
+            sub["Dropdown_Display"] = (
+                "ID: " + sub["CLUSTER IDs"].astype(str) + ", DeltaMZ: " + sub["DeltaMZ"].round(3).astype(str)
+            )
+            choice = st.selectbox("Select the edge to view plots", sub["Dropdown_Display"].tolist())
+            return sub[sub["Dropdown_Display"] == choice].drop(columns=["Dropdown_Display"])
+
+    if filter_mode == "Filter by Name":
+        if not {"ID1_name", "ID2_name"}.issubset(df.columns):
+            st.warning("You don't have names for the cluster IDs in the table.")
+            return df.iloc[0:0]  # empty
+
+        with c1:
+            text = st.text_input("Enter text:", "")
+        sub = df.copy()
+        if text:
+            sub = sub[
+                sub["ID1_name"].str.contains(text, case=False, na=False)
+                | sub["ID2_name"].str.contains(text, case=False, na=False)
+            ].copy()
+
+        with c2:
+            if sub.empty:
+                st.warning("No edges match that text.")
+                return sub
+            choice = st.selectbox("Select the edge to view plots", sub["CLUSTER IDs"].tolist())
+            return sub[sub["CLUSTER IDs"] == choice]
+
+    # Filter by Cluster ID
+    choice = st.selectbox("Select the edge to view plots:", options=df["CLUSTER IDs"].unique())
+    return df[df["CLUSTER IDs"] == choice]
+
+
+def render_edge_detail_plots(filtered_df, all_scores_df, features_df, metadata_df):
+    if filtered_df is None or filtered_df.empty:
+        return
+
+    with st.container():
+        c1, c2 = st.columns(2)
+
+        with c1:
+            selected_row = filtered_df.iloc[0]
+            fig, status = plot_intensity_trends_single_row_chemprop1(
+                selected_row,
+                features_df,
+                metadata_df
+            )
+
+            # ---- Streamlit warnings ----
+            if status["missing_ids"]:
+                st.warning(
+                    f"Cannot plot intensities for feature(s) not present in the feature table: "
+                    f"{status['missing_ids']}"
+                )
+
+            if status["metadata_missing"]:
+                st.warning("Metadata table is missing or empty. Intensity trends cannot be plotted.")
+
+            if status["no_overlap_samples"]:
+                st.warning(
+                    "No overlapping samples between feature table and metadata. "
+                    "Please check sample naming consistency."
+                )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+        with c2:
+            try:
+                comp_index = filtered_df["ComponentIndex"].iloc[0]
+                plot_df = all_scores_df[all_scores_df["ComponentIndex"] == comp_index].copy()
+
+                allowed = ["ComponentIndex", "Cosine", "DeltaMZ", "ChemProp1", "Sign_ChemProp1", "abs_ChemProp1"]
+                available = [c for c in plot_df.columns if c in allowed]
+
+                edge_label_column = st.selectbox(
+                    "Select column for edge labels:",
+                    options=available,
+                    help="To save the network image as PNG, right-click on empty space and select 'Save image as'.",
+                )
+
+                nodes, edges = generate_graph_from_df_chemprop1(plot_df, filtered_df, edge_label_column)
+
+                config = Config(
+                    width=800, height=600,
+                    directed=True,
+                    nodeHighlightBehavior=True,
+                    highlightColor="#F7A7A6",
+                    collapsible=True,
+                    node={"labelProperty": "label"},
+                    link={"labelProperty": "label", "renderLabel": True},
+                    staticGraph=False,
+                )
+
+                st.markdown(_legend_html(), unsafe_allow_html=True)
+                agraph(nodes=nodes, edges=edges, config=config)
+
+            except ModuleNotFoundError:
+                st.error("This page requires the `pygraphviz` package, which is not available in the Windows app.")
+
+
+def _legend_html():
+    return """
+    <div style="display: flex; justify-content: center;">
+        <div style="display: flex; align-items: center; margin-right: 20px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: blue; color: white;
+                        display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                Source
+            </div>
+            <div style="margin-top:10px; font-size:12px;">
+                CLUSTERID1</b>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: red; color: white;
+                        display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                Target
+            </div>
+            <div style="margin-top:10px; font-size:12px;">
+                CLUSTERID2</b>
+            </div>
+        </div>
+    </div>
+    """
+
+
+def build_dashinterface_scan_url(task_id: str, scan1: str, scan2: str) -> str:
+    usi1 = build_usi(task_id, scan1)
+    usi2 = build_usi(task_id, scan2)
+
+    params = {
+        "usi1": usi1,
+        "usi2": usi2,
+        "width": 10.0,
+        "height": 6.0,
+        "cosine": "standard",
+        "fragment_mz_tolerance": 0.1,
+        "grid": True,
+        "annotate_precision": 4,
+        "annotation_rotation": 90,
+    }
+    return "https://metabolomics-usi.gnps2.org/dashinterface/?" + up.urlencode(
+        params, safe=":/[](),"
+    )
+
+
+def build_usi(task_id: str, scan_id) -> str:
+    return (
+        f"mzspec:GNPS2:TASK-{task_id}-nf_output/clustering/"
+        f"spectra_reformatted.mgf:scan:{scan_id}"
+    )
+
+
+def build_modifinder_url(
+    usi1: str,
+    usi2: str,
+    *,
+    smiles1: str = "",
+    smiles2: str = "",
+    adduct: str = "[M+H]1+",
+    ppm_tolerance: int = 10,
+    base_peak_filter_ratio: float = 0.01,
+    helpers: str = "",
+) -> str:
+    base_url = "https://modifinder.gnps2.org/"
+
+    params = {
+        "USI1": usi1,
+        "USI2": usi2,
+        "SMILES1": smiles1 or "",
+        "SMILES2": smiles2 or "",
+        "Helpers": helpers,
+        "adduct": adduct,
+        "ppm_tolerance": ppm_tolerance,
+        "filter_peaks_variable": base_peak_filter_ratio,
+    }
+
+    return f"{base_url}?{up.urlencode(params, quote_via=up.quote)}"
+
+
+
+def get_smiles_from_annotation(an_gnps, scan_id):
+    """
+    Lookup SMILES for a given scan ID from GNPS annotation table.
+
+    Parameters
+    ----------
+    an_gnps : pd.DataFrame or None
+        GNPS annotation table (must contain '#Scan#' and 'smiles' columns)
+    scan_id : str or int
+
+    Returns
+    -------
+    str
+        SMILES string if found, else empty string
+    """
+    if an_gnps is None or an_gnps.empty:
+        return ""
+
+    if "#Scan#" not in an_gnps.columns or "Smiles" not in an_gnps.columns:
+        return ""
+
+    scan_id = str(scan_id)
+
+    hit = an_gnps.loc[
+        an_gnps["#Scan#"].astype(str) == scan_id, "Smiles"
+    ]
+
+    if hit.empty:
+        return ""
+
+    smiles = hit.iloc[0]
+    return "" if pd.isna(smiles) else str(smiles).strip()
+
+def render_spectra_modifinder(filtered_df, an_gnps, task_id_key: str = "gnps_task_id"):
+    if filtered_df is None or filtered_df.empty:
+        return
+
+    task_id = (st.session_state.get(task_id_key) or "").strip()
+    if not task_id:
+        return  # hard guard (no UI)
+
+    row = filtered_df.iloc[0]
+    scan1 = str(row.get("CLUSTERID1", "")).strip()
+    scan2 = str(row.get("CLUSTERID2", "")).strip()
+
+    if not (scan1 and scan2):
+        return
+
+    # --- Build USIs
+    usi1 = build_usi(task_id, scan1)
+    usi2 = build_usi(task_id, scan2)
+
+    # --- Lookup SMILES (optional)
+    smiles1 = get_smiles_from_annotation(an_gnps, scan1)
+    smiles2 = get_smiles_from_annotation(an_gnps, scan2)
+
+    dash_url = build_dashinterface_scan_url(task_id, scan1, scan2)
+
+    modifinder_url = build_modifinder_url(
+        usi1=usi1,
+        usi2=usi2,
+        smiles1=smiles1,
+        smiles2=smiles2,
+    )
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.link_button(
+            f"🔎 Spectrum Resolver (scan {scan1} vs {scan2})",
+            dash_url,
+            type="primary",
+            use_container_width=True,
+        )
+
+    with c2:
+        st.link_button(
+            "🧩 Open in ModiFinder",
+            modifinder_url,
+            use_container_width=True,
+        )
+
+        if not smiles1 and not smiles2:
+            st.caption("No SMILES found in GNPS annotations (can be added manually in ModiFinder).")
 

@@ -5,48 +5,54 @@ from src.common import *        # Importing common functionalities
 from src.fileselection import * # Importing file selection functionalities
 from src.cleanup import *
 
+page_setup()
+
 # Introduction Section
 st.markdown("### Please select your method for data input below.")
 
-# Input Selection Section
-input_method = st.selectbox("Select Input Method", 
-                            ["Use Example Dataset",
-                             "Manual Input",
-                             "GNPS(2) task ID",
-                             ],
-                             index=0  # This sets "Use Example Dataset" as the default option
-                             )
+input_method = st.selectbox(
+    "Select Input Method",
+    ["Use Example Dataset", "Manual Input", "GNPS(2) FBMN task ID"],
+    index=0,
+    key="input_method",
+)
 
-# Clearing the session state 
-if 'last_input_method' not in st.session_state:
-    st.session_state['last_input_method'] = None
+# --- Initialize session_state keys ---
+for key in ["ft", "md", "nw", "an_gnps"]:
+    if key not in st.session_state:
+        st.session_state[key] = None
 
-# Example Dataset Section
-elif input_method == "Use Example Dataset":
-    # Check if input method has changed
-    if st.session_state['last_input_method'] != input_method:
-        # Clear the data
-        for key in ['ft', 'md', 'nw', 'an_gnps']:
-            st.session_state[key] = None
+if "gnps_task_id" not in st.session_state:
+    st.session_state["gnps_task_id"] = ""
 
-        # Update the last input method
-        st.session_state['last_input_method'] = input_method
-    
-    load_example()  # Load data into session state
+if "last_input_method" not in st.session_state:
+    st.session_state["last_input_method"] = input_method
 
-    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
-                              ['ft', 'md', 'nw', 'an_gnps']):
-        display_dataframe_with_toggle(key, file_name)
+# --- Detect change in input method ---
+if st.session_state["last_input_method"] != input_method:
+    for key in ["ft", "md", "nw", "an_gnps"]:
+        st.session_state[key] = None
 
-# Manual Input Section
-if input_method == "Manual Input":
-    if st.session_state['last_input_method'] != input_method:
-        # Clear the data
-        for key in ['ft', 'md', 'nw', 'an_gnps']:
-            st.session_state[key] = None
-        # Update the last input method
-        st.session_state['last_input_method'] = input_method
+    if st.session_state["last_input_method"] == "GNPS(2) FBMN task ID":
+        st.session_state["gnps_task_id"] = ""
+        
+    st.session_state["last_input_method"] = input_method
+    st.rerun()
 
+# ============================================================
+# 1. Example Dataset (special: loads all 4 tables)
+# ============================================================
+
+if input_method == "Use Example Dataset":
+    if all(st.session_state[k] is None for k in ["ft", "md", "nw", "an_gnps"]):
+        load_example()
+    show_input_tables_in_tabs()
+    #st.stop()  # don't show uploaders below in this mode
+
+# ============================================================
+# 2. Manual Input
+# ============================================================
+elif input_method == "Manual Input":
     st.info("💡 Upload tables in txt (tab separated), tsv, csv or xlsx (Excel) format.")
 
     # Create 2 columns for the ft, md file uploaders
@@ -79,48 +85,43 @@ if input_method == "Manual Input":
         if annotation_file:
             st.session_state['an_gnps'] = load_annotation(annotation_file)
 
-    # Display headers and 'View all' buttons for each file
-    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
-                              ['ft', 'md', 'nw', 'an_gnps']):
-        display_dataframe_with_toggle(key, file_name)
+    show_input_tables_in_tabs()
 
-if input_method == "GNPS(2) task ID":
-    if st.session_state['last_input_method'] != input_method:
-        for key in ['ft', 'md', 'an_gnps', 'nw']:
-            st.session_state[key] = None
-        st.session_state['last_input_method'] = input_method
-        st.warning("💡 This tool only supports task IDs from GNPS2.")
+# ============================================================
+# 3. GNPS(2) FBMN task ID
+# ============================================================
+elif input_method == "GNPS(2) FBMN task ID":
     
-    task_id = st.text_input("GNPS task ID", "", disabled=False, key="gnps_task_id")
-    #st.write(task_id)
+    st.warning("💡 This tool only supports task IDs from GNPS2.")
+
+    task_id_default = "1b5b94b4191d4223a5f57afb2aaaf0b0"
+    task_id = st.text_input("GNPS task ID", task_id_default)
+
+    st.session_state["gnps_task_id"] = task_id.strip()
+
     _, c2, _ = st.columns(3)
-
-    # Ensure button always displays
-    load_button_clicked = c2.button("Load files from GNPS", type="primary", disabled=len(task_id) == 0, use_container_width=True)
-    
+    load_button_clicked = c2.button(
+        "Load files from GNPS",
+        type="primary",
+        disabled=len(task_id) == 0,
+        use_container_width=True
+    )
+    #give a default task ID for testing: 1b5b94b4191d4223a5f57afb2aaaf0b0
+  
     if load_button_clicked and task_id:
         st.session_state["ft"], st.session_state["md"], st.session_state["an_gnps"], st.session_state["nw"] = load_from_gnps(task_id)
 
-        # Check if 'ft' and 'nw' are loaded but 'md' is missing
         if st.session_state.get("ft") is not None and st.session_state.get("nw") is not None and (
             st.session_state.get("md") is None or st.session_state["md"].empty
         ):
             st.warning("Metadata is missing. Please upload it manually.")
-            
-            md_file = st.file_uploader(
-                "Upload Metadata", 
-                type=["csv", "xlsx", "txt", "tsv"],
-                help="User-created metadata table providing context for samples."
-            )
-
+            md_file = st.file_uploader("Upload Metadata", type=["csv", "xlsx", "txt", "tsv"])
             if md_file:
-                md = load_md(md_file)
-                st.session_state['md'] = md
+                st.session_state["md"] = load_md(md_file)
                 st.success("Metadata was loaded successfully!")
 
-    for file_name, key in zip(["Feature Matrix", "MetaData", "Edge Table", "GNPS Annotations"],
-                              ['ft', 'md', 'nw', 'an_gnps']):
-        display_dataframe_with_toggle(key, file_name)
+    show_input_tables_in_tabs()
+
 
 st.markdown("## Data Cleanup")
 
@@ -262,6 +263,7 @@ else:
     # If data is not available, display a message
     st.warning("Data not loaded. Please load the data first.")
 
+st.info('After data cleanup, proceed to the ChemProp1 or ChemProp2 pages  based on the number of timepoints in your data for further analysis.')
 
 # Displaying the message with a link
 st.markdown("""

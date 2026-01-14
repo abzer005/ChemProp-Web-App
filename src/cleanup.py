@@ -70,13 +70,31 @@ def check_columns(md, ft):
 
 @st.cache_data
 def inside_levels(df):
-    df = pd.DataFrame(
-        {
-            "ATTRIBUTES": df.columns,
-            "LEVELS": [set(df[col].dropna().astype(str).to_list()) for col in df],
-            "COUNTS": [df[col].value_counts().to_list() for col in df],
-        }
-    )
+
+    result = []
+
+    for col in df.columns:
+        # Convert all values to string (including NaN as 'NaN') for uniformity
+        values = df[col].astype(str)
+        
+        # Create a dictionary of levels and counts (including NaN)
+        level_count_dict = values.value_counts(dropna=False).to_dict()
+
+        # Sort levels alphabetically/numerically, keeping 'NaN' visible
+        sorted_levels = sorted(level_count_dict.keys(), key=lambda x: (x != "nan", x))
+
+        # Extract counts corresponding to the sorted levels
+        sorted_counts = [level_count_dict[level] for level in sorted_levels]
+
+        # Append to result
+        result.append({
+            "ATTRIBUTES": col,
+            "LEVELS": sorted_levels,
+            "COUNTS": sorted_counts,
+        })
+
+    # Convert to DataFrame
+    df = pd.DataFrame(result)
     return df
 
 
