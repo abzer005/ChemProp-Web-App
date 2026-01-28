@@ -21,63 +21,129 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write(' ')
-st.subheader('What is ChemProp2 Used For?')
+
+st.subheader("What is ChemProp2?")
 
 st.write("""
-         ChemProp2 is a tool developed to address a key challenge in non-targeted metabolomics using liquid chromatography-tandem mass spectrometry (LC–MS/MS), 
-         particularly in the study of biotransformation studies like drug metabolism as well as xenobiotic and natural product biotransformation in the environment. 
-        
-         Analyzing and annotating the vast data from metabolomic studies still remains a challenge. Various in silico methods and spectral similarity metrics have been developed to tackle this issue. 
-         Tools like GNPS (now GNPS2) use Feature-based Molecular Networking (FBMN) to create molecular networks by connecting metabolites with similar MS/MS spectral profiles. 
-         ChemProp2 builds on this, identifying potential biotransformations within these networks. It detects anti-correlating metabolites and putatibve reaction pairs, scoring their correlation over time or space. 
-         This helps in prioritizing and visualizing biochemical alterations within the network.
-        
-         ChemProp2 is particularly useful when dealing with more than two sequential data points. Go to the module ChemProp1 for studies with only two data points. [To read more about this](https://doi.org/10.1021/acs.analchem.1c01520)""")
+**ChemProp2** is a network-based metabolomics tool for identifying and prioritizing 
+**putative biotransformations** in non-targeted LC–MS/MS data. It is particularly suited for **time-series and multi-condition experiments**, such as:
+- Microbiome-mediated drug metabolism
+- Xenobiotic and environmental biotransformation
+- Natural product transformation studies
+
+ChemProp2 builds on **Feature-based Molecular Networking (FBMN)** and uses 
+**correlation-based scoring** to detect anti-correlating metabolite pairs and 
+infer transformation relationships across networks.
+
+### ChemProp1 vs ChemProp2 (Quick Guide)
+
+- **ChemProp1**  
+  - Log-ratio–based approach  
+  - Best for **two-point comparisons**  
+  - [Published method](https://doi.org/10.1021/acs.analchem.1c01520). Available in this app for convenience
+
+- **ChemProp2**  
+  - Correlation-based approach  
+  - Best for **three or more sequential data points**  
+""")
 
 # Input Files
-st.subheader('Input File Requirements')
-st.write(""" 
-         The accepted formats for the manually uploading the input files are **CSV**, **TXT**, or **XLSX**. The necessary files include:
-         1. **Feature Quantification Table**
-         2. **Metadata** 
-         3. **Edge File** from FBMN - This is essential for analyzing connections between node pairs (metabolites).
-         4. **Annotation Files** (if available) from FBMN - These files provide additional context and annotation for the features in your dataset.
-         
-         **Instead of manually uploading these files, you can also provide your FBMN Job ID from GNPS2.**
-         This will allow ChemProp2 to directly retrieve and process the necessary data. To get an idea of how these tables should be structured, you can use the test data available on the ‘Load Input Data’ page. \n
-         **Note:** FBMN jobs from GNPS1 are not supported. 
-         """)
+st.subheader("Input Data Options")
+
+st.write("""
+ChemProp2 supports **three ways** to provide input data. Choose the option that best fits your workflow:
+""")
+
+with st.expander("🧪 Example Dataset (Quick Start)"):
+    st.markdown("""
+This option loads a **lightweight example dataset** to help you quickly explore the app.
+
+- Contains a **subset** of an FBMN task used in the ChemProp2 manuscript
+- Optimized for **fast execution**
+- The drug-related feature to inspect is **`drug1`** (see annotation table)
+
+Recommended if you want to **try the app immediately** without preparing input files.
+""")
+
+with st.expander("🧬 FBMN Task ID (GNPS2)"):
+    st.markdown("""
+Provide an **FBMN Task ID from GNPS2** to automatically retrieve all required inputs.
+
+- The default Task ID corresponds to the **ChemProp2 manuscript dataset**  
+  (link will be added soon)
+- Dataset description:
+  - Synthetic gut bacterial community (SynCom)
+  - Treated with **12 drugs**
+  - Samples collected across **multiple timepoints**
+
+You may use this dataset as a **fully worked example** to explore ChemProp scoring (both ChemProp1 and ChemProp2 modes),
+cascade analysis, and network-level visualization.
+""")
+
+with st.expander("📂 Manual Upload"):
+    st.markdown("""
+Upload your own data in **CSV**, **TXT**, or **XLSX** format.
+
+Required / optional inputs include:
+
+- **Feature Quantification Table** (required)
+- **Metadata Table** (required)
+- **Edge Table** from FBMN or user-generated networks  
+  (required for 'Provided Edge Table' Mode and 'Cascade Analysis' Mode)
+- **Annotation Tables** from FBMN (optional but recommended)
+
+This option provides full flexibility for **custom datasets** and non-GNPS workflows.
+""")
+
+st.markdown("""
+### 🔗 External Interpretation Tools
+
+Integration with **Spectrum Resolver** and **ModiFinder** is available **only when using the FBMN Task ID option**.
+
+These tools require **Universal Spectrum Identifiers (USIs)**, which are automatically available
+when data are retrieved directly from GNPS2.
+
+- Spectrum Resolver: https://metabolomics-usi.ucsd.edu
+- ModiFinder: https://modifinder.gnps2.org
+""")
+
+st.warning(
+    "Manual uploads **do not support** Spectrum Resolver or ModiFinder "
+    "due to the absence of Universal Spectrum Identifiers (USIs)."
+)
 
 st.write("""
 ### Data Preparation Essentials
-To ensure smooth processing, follow these guidelines:
 
-- Input files must include the `.mzML` extension in the feature quantification table and metadata table.
-- **Metadata Table**:
-  - Must include a column **filename**.
-  - Can include attribute columns such as **replicates**, **sample type** (e.g., control, treatment), etc.
-  - **Time**: A specific column for time is mandatory.
+To ensure smooth and error-free processing, please follow these guidelines:
+
+- Input files must include the `.mzML` extension in both the feature quantification table and the metadata table.
+- **Metadata Table (required):**
+  - Must include a column named **filename**, matching the feature table exactly.
+  - May include additional attribute columns such as **replicates** or **sample type** (e.g., control, treatment).
+  - A **Time column is mandatory** and **must contain numeric values** representing time points.  
+    (e.g., `2`, `2h`, `2hr`, `2min`; text will be stripped automatically).
 """)
 
-st.markdown("""          
-Example feature table:  
- 
-|feature|sample1.mzML|sample2.mzML|blank.mzML|
-|---|---|---|---|
-|1|1000|1100|100|
-|2|2000|2200|200|
+with st.expander("📊 Example Input Tables"):
+    st.markdown("""
+
+**Example Feature Quantification Table**
+
+| feature | sample1.mzML | sample2.mzML | blank.mzML |
+|--------|---------------|---------------|------------|
+| 1 | 1000 | 1100 | 100 |
+| 2 | 2000 | 2200 | 200 |
 """)
 
-st.write(' ')
+    st.markdown("""
+**Example Metadata Table**
 
-st.markdown("""        
-Example meta data table:
-            
-|filename|Sample_Type|Time_Point|
-|---|---|---|
-|sample1.mzML|Sample|1h|
-|sample2.mzML|Sample|2h|
-|blank.mzML|Blank|N/A| 
+| filename | Sample_Type | Time |
+|----------|-------------|------|
+| sample1.mzML | Sample | 1h |
+| sample2.mzML | Sample | 2h |
+| blank.mzML | Blank | N/A |
 """)
 
 # Define the data
@@ -108,34 +174,95 @@ data = {
 # Convert to a pandas DataFrame
 df = pd.DataFrame(data)
 
+data = {
+    "ChemProp Input File": [
+        "Feature Quantification Table",
+        "Metadata Table",
+        "Edge Table",
+        "Annotation Table (Library Matches)",
+        "Annotation Table (Library + Analog Matches)"
+    ],
+    "GNPS1 Folder Location": [
+        "`quantification_table`",
+        "`metadata_table`",
+        "`networking_pairs_results_file_filtered`",
+        "`DB_result`",
+        "`DB_analogresult`"
+    ],
+    "Notes": [
+        "Required for all ChemProp analyses.",
+        "Must include filename and time information.",
+        "Required for network-based and cascade analyses.",
+        "Optional. Provides GNPS library annotations.",
+        "Optional. Includes both library annotations and analog hits."
+    ]
+}
+
+df = pd.DataFrame(data)
+
+
 # Display the table
 st.write(' ')
-st.write("""
-### For GNPS1 Users: Uploading Data
-While ChemProp2 doesn’t support FBMN jobs from GNPS1 directly, you can manually upload the required files to the app.""")
-st.write("""
-         Once your FBMN job is complete, go to the **Job Status** page and press **Download Cytoscape Data**
-         under **Export/Download Network Files**. 
-         In the downloaded folder, you can find the required files as follows:
+with st.expander("📌 For GNPS1 Users: Uploading Data"):
+    st.markdown("""
+⚠️ **GNPS1 Task IDs are not supported in this app.**
 
-         """)
-st.table(df)
+- This applies to **both ChemProp modules** available here (ChemProp1 and ChemProp2).
+- Only **FBMN Task IDs from GNPS2** are supported. 
+- If your data were generated using **GNPS1**, please do **not** enter a GNPS1 Task ID.
+
+**What should GNPS1 users do instead?**
+
+1. Navigate to your **GNPS1 FBMN task** on GNPS.
+2. Go to the **Job Status** page.
+3. Under **Export / Download Network Files**, click **Download Cytoscape Data**.
+4. Unzip the downloaded folder.
+
+Within the extracted folder, you will find the files required for **Manual Upload**, as summarized below:
+""")
+
+    st.dataframe(df, hide_index=True, use_container_width=True)
 
 
-# Output Files
-st.subheader('Output File Information')
+st.subheader("Choosing the Right Mode for Your Analysis")
+with st.expander("🧭 **DECISION GUIDE**: Which mode should I use?"):
+    st.markdown("""
+Use this quick guide to choose the best mode for your question:
+
+**✅ Use _Provided Edge Table mode_ if you want to…**
+- Score transformations **across a whole network**
+- Reproduce or extend results from **FBMN**
+- Filter / prioritize edges based on ChemProp scores
+
+**✅ Use _Cascade edges mode_ if you want to…**
+- Start from **one feature (e.g., a drug node)** and explore downstream / upstream relationships
+- Identify **multi-step transformation chains**
+- Prioritize **higher-order** candidates beyond first-degree neighbors
+
+**✅ Use _User defined edge mode_ if you want to…**
+- Test a **specific hypothesis** (Feature A → Feature B)
+- Compare two selected nodes even if they are not strongly connected in the provided network
+- Quickly validate a suspected transformation between two features
+
+**Rule of thumb:**  
+- *Network-wide scoring* → **Provided Edge Table**  
+- *Transformation chains from a starting node* → **Cascade Edges**  
+- *One targeted comparison* → **User defined edge**
+""")
+
+st.subheader("Output File Information")
+
 st.write("""
-     
-Upon processing your data, ChemProp2 generates an output in the form of a CSV file. 
-This file is an enhanced version of the node-pair information, now including ChemProp2 scores for each pair. 
-The scores range from -1 to +1, providing a comprehensive score for every edge (or node pair) within the molecular network.
-         
-Key aspects of the output CSV include:
-- **Score Range**: Each node pair gets a score between -1 and +1.
-- **Score Interpretation**: 
-  - The magnitude of the score indicates the strength of the potential transformation. 
-  - The sign of the score (positive or negative) reveals the directionality of the transformation. 
-  - For example, in a node pair A & B, the sign of the score will indicate whether the transformation is from A to B or vice versa.
+ChemProp2 generates a single **CSV output file** containing **ChemProp2 scores for each node pair** in the molecular network.
+The output extends the input edge (node-pair) table by adding ChemProp2 scoring information for each node pair.
+
+**Key details:**
+- **Score range:** −1 to +1 for each node pair
+- **Score magnitude:** indicates the strength of the putative transformation
+- **Score sign:** + or - sign indicates transformation directionality  
+  (e.g., whether A → B or B → A within a node pair)
+
+Each row in the CSV corresponds to one edge in the molecular network.
 """)
 
 st.write("""
@@ -176,6 +303,67 @@ check the **top-right corner** of the page. If you see the message **'RUNNING'**
 - Double-click on the plot to reset the zoom and return to the default view.  
 - Save plots using the **camera icon** in the top-right corner of the plot. You can specify the image format (e.g., PNG) in the settings panel before saving.
 """)
+
+
+
+st.subheader("⬇️ Download the ChemProp2 App")
+# ----------------------------
+# Windows expander
+# ----------------------------
+with st.expander("🪟 Windows users", expanded=False):
+    st.markdown("""
+### ✅ Option 1 — Website download (recommended)
+1. Go to: https://www.functional-metabolomics.com/resources  
+2. Under **Software**, click **Download** next to **ChemProp2 Web App**
+
+### ⚙️ Option 2 — GitHub Actions build (advanced)
+> Requires a GitHub account
+
+1. Go to: https://github.com/Functional-Metabolomics-Lab/ChemProp-Web-App/actions  
+2. Select the **latest successful workflow run**
+3. Scroll to **Artifacts** and **download** the ZIP file  
+4. **Extract** the ZIP locally  
+5. Run the **ChemProp2 app executable** inside the extracted folder
+""")
+# ----------------------------
+# macOS expander
+# ----------------------------
+with st.expander("🍎 macOS users", expanded=False):
+    st.markdown("""
+🚫 A pre-built macOS version is **not available**.
+
+### ▶️ Run locally from source
+For **macOS** and **Windows** users who want full control over the app.
+
+**Step-by-step**
+1. Clone the repository:  
+   ``git clone https://github.com/Functional-Metabolomics-Lab/ChemProp-Web-App.git``
+
+2. Navigate into the project folder:  
+   ``cd ChemProp-Web-App``
+
+3. Install required dependencies:  
+   ``pip install -r requirements.txt``
+
+4. Launch the app:  
+   ``streamlit run Home.py``
+
+The app will open automatically in your web browser at a local address  
+(for example: ``http://localhost:8501``).
+                """)
+
+# ----------------------------
+# Optional note expander
+# ----------------------------
+with st.expander("ℹ️ Notes & tips", expanded=False):
+ st.markdown("""
+- The **GitHub Actions build** gives more control and transparency  
+- Running from source requires **Python + Streamlit** installed locally
+- Make sure you have Python 3.11 installed (same version used in the Windows .exe build).
+- You can run Online (Recommended for smaller networks). If your input data is relatively large, please consider running it locally.
+
+""")
+                
 
 # Citation and Resources
 st.subheader('Citation and Further Resources')

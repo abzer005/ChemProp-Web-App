@@ -8,10 +8,24 @@ page_setup()
 
 st.markdown("### ChemProp1 Analysis")
 
-st.markdown("""
-**Instructions:** 
-For ChemProp1 analysis, select an attribute from your dataset that contains exactly two distinct sequential points (e.g., two different time points or two spatial points). 
-This analysis is based on the assumption that the abundance of an initial compound decreases over time or across space, while the abundance of a new compound increases.
+st.warning(
+    """
+- ChemProp1 is designed for experiments with **exactly 2 sequential timepoints**. 
+- If your dataset contains more than 2 timepoints, please use the **Filter the Data** 
+section below to subset your data to **2 timepoints only**, or proceed to 
+**ChemProp2** for multi-timepoint analysis.
+
+""")
+
+st.info("""
+**To run ChemProp1:**
+        
+Ensure that your metadata table is **properly formatted**, including: 
+  - A **filename** column matching the feature table
+  - A valid time column with numeric values for the two time points.
+
+👉 Please refer to the **Data Preparation Essentials** section on the **Home** page for
+details on required metadata structure and formatting.
 """)
 
 # Check if metadata is loaded
@@ -26,11 +40,19 @@ if 'md_for_analysis' in st.session_state and not st.session_state['md_for_analys
     # Display the overview dataframe and checkboxes
     st.markdown("### Select Metadata Columns for ChemProp1 Calculation")
 
-    st.markdown("""
-                - ChemProp1: Select the metadata column that contains the timepoint information. This column must be present in the metadata for ChemProp1 calculation and should contains ONLY 2 TIMEPOINTS.
-                - Treatments: Select the metadata column that contains the treatment conditions (e.g., control and treatment groups). This category is optional.
-                - Replicates: Select the metadata column that contains the replicate information. This category is optional and will be used for plotting intensity trends.
-                """)
+    st.info("""
+- **ChemProp1 Timepoint (required):**  
+  In the following checkbox table, select the metadata column that contains the **time information**.  
+  This column **must contain exactly two distinct values** and is required to run ChemProp1.
+
+- **Treatments (optional):**  
+  Select the metadata column that defines treatment groups (e.g., control vs treatment).
+  This can be used for filtering and performing group-wise analyses.
+
+- **Replicates (optional):**  
+  Select the metadata column that defines biological or technical replicates.  
+  This information is used for **visualizing intensity trends**.
+""")
     
     st.markdown("""
                 <div style="color: #05577C; font-size: 20px;">
@@ -56,62 +78,76 @@ if 'md_for_analysis' in st.session_state and not st.session_state['md_for_analys
     treatment_row = edited_df[edited_df['Treatments'] == True]['ATTRIBUTES'].tolist()
     rep_row = edited_df[edited_df['Replicates'] == True]['ATTRIBUTES'].tolist()
 
+    # Enforce exactly one timepoint column for ChemProp1
+    timepoint_column = chemprop_row[0] if chemprop_row else None
+
+    # Keep ALL metadata columns for later filtering (do this once)
+    st.session_state["chemprop1_md_full"] = chemprop_md.copy()
+
+    # Store the user's "role assignments" (for later plotting/labels; optional)
+    st.session_state["chemprop1_time_col"] = timepoint_column
+    st.session_state["chemprop1_treatment_cols"] = treatment_row
+    st.session_state["chemprop1_replicate_cols"] = rep_row
+
+
     # Show the selected attributes for Treatments
     if chemprop_row:
          # Extract unique values from the selected attributes in `chemprop_md` dataframe
-        unique_values = chemprop_md[chemprop_row].nunique().tolist()  # Number of unique values in each selected column
+        if timepoint_column:
+            unique_count = chemprop_md[timepoint_column].nunique(dropna=True)
 
-        # Display appropriate message based on unique values count
-        if all(count < 3 for count in unique_values):  # Checking if all selected columns have fewer than 3 unique values
-            st.success(
-                f"You have only {', '.join(map(str, unique_values))} unique timepoints across selected attributes. "
-                f"Hence, using ChemProp1 is appropriate for this data.",
-                icon="✅"
-            )
+            if unique_count < 3:
+                st.success(
+                    f"You have {unique_count} unique timepoints in '{timepoint_column}'. "
+                    "ChemProp1 is appropriate for this data.",
+                    icon="✅"
+                )
+            else:
+                st.error(
+                    "You cannot run ChemProp1 for attributes with more than 2 unique timepoints. "
+                    "Consider running ChemProp2, or filter the data further in the 'Filter the Data' section below to have only 2 timepoints.",
+                    icon="🚨"
+                )
+
+            st.success(f"The column selected for calculating ChemProp1: {timepoint_column}")
         else:
-            st.error(
-                "You cannot run ChemProp1 for attributes with more than 2 unique timepoints. "
-                "Consider running ChemProp2, or filter the data further to have only 2 timepoints.",
-                icon="🚨"
-            )
-        st.success(f"The column selected for calculating ChemProp1: {', '.join(chemprop_row)}")
-    else:
-        st.warning("No column selected for calculating ChemProp1 scores.")
-
+            st.warning("No column selected for calculating ChemProp1 scores.")
 
     # Show the selected attributes for Treatments
     if treatment_row:
         st.success(f"The column selected for Treatment conditions: {', '.join(treatment_row)}")
     else:
-        st.warning("No column selected for Treatments.")
+        st.warning("No column selected for Treatments. This is optional and you can proceed without it.")
 
     # Show the selected attributes for Replicates
     if rep_row:
         st.success(f"The column selected for Replicate conditions: {', '.join(rep_row)}")
     else:
-        st.warning("No column selected for Replicates.")
+        st.warning("No column selected for Replicates. This is optional and you can proceed without it.")
     
     # Subset the DataFrames based on the user's selection
     treatment_md = chemprop_md[treatment_row] if treatment_row else pd.DataFrame()
     rep_md = chemprop_md[rep_row] if rep_row else pd.DataFrame()
-    time_md = chemprop_md[chemprop_row].applymap(strip_non_numeric).apply(pd.to_numeric, errors='coerce')
+    
+    time_md = (
+        chemprop_md[[timepoint_column]]
+        .applymap(strip_non_numeric)
+        .apply(pd.to_numeric, errors="coerce")
+    ) if timepoint_column else pd.DataFrame(index=chemprop_md.index)
 
-    # Conditional creation of subset_chemprop_md
-    if treatment_row and rep_row:
-        subset_chemprop_md = pd.concat([time_md, treatment_md, rep_md], axis=1, join='outer')
-    elif treatment_row:
-        subset_chemprop_md = pd.concat([time_md, treatment_md], axis=1, join='outer')
-    elif rep_row:
-        subset_chemprop_md = pd.concat([time_md, rep_md], axis=1, join='outer')
-    else:
-        subset_chemprop_md = time_md
+    # Keep ALL metadata columns for later filtering
+    st.session_state["chemprop1_md_full"] = chemprop_md.copy()
+
+    subset_chemprop_md = chemprop_md.copy()
+    if timepoint_column:
+        subset_chemprop_md[timepoint_column] = time_md[timepoint_column]
         
     st.markdown("### ChemProp1 Metadata with Selected Columns")
 
     final_ft = st.session_state['ft_for_analysis'].copy()
     st.session_state['chemprop1_ft'] = final_ft
     st.session_state['chemprop1_subset_md'] = subset_chemprop_md
-    st.session_state['chemprop1_md'] = time_md
+    st.session_state["chemprop1_md"] = subset_chemprop_md[[timepoint_column]] if timepoint_column else pd.DataFrame()
 
     tab_info= [
         ("chemprop1_subset_md", "Filtered Metadata"),
@@ -125,106 +161,156 @@ else:
 
 ################################## FILTER THE DATA ##########################################################
 st.markdown("### Filter the Data")
-subset_md = st.checkbox("Do you want to subset the data further?", False)
 
-if subset_md:
-    # Markdown for initial instruction
+with st.expander("ℹ️ Why would I want to filter the data? (optional)"):
+    st.markdown("""
+Filtering is **optional**, but can be helpful depending on your experimental design and analysis goals.
+
+You may want to filter your data to:
+- Restrict the analysis to **specific timepoints** (e.g., required for ChemProp1, only 2 timepoints)
+- Run ChemProp **separately for different subgroups**
+- Focus on a subset of samples or replicates
+
+This section provides:  
+1️⃣ **Initial Timepoint Filter** – select **exactly two timepoints** (required for ChemProp1).  
+2️⃣ **Additional Filters** – optionally subset by **any metadata column** (up to 10 filters).  
+   For example, if your dataset includes **treatment** and **control** groups, it is recommended to run 
+                ChemProp **independently for each group** rather than combining them.
+""")
+
+do_subset = st.checkbox("Do you want to subset the data further?", False)
+
+if do_subset:
     st.markdown("Select samples based on their conditions.")
 
-    # Container for the first filter - specifically for `chemprop_row` column
+    # --- Determine the (single) timepoint column ---
+    timepoint_column = st.session_state.get("chemprop1_time_col")
+    if not timepoint_column:
+        # fallback if session_state not set yet
+        timepoint_column = chemprop_row[0] if isinstance(chemprop_row, list) and chemprop_row else chemprop_row
+
+    if not timepoint_column:
+        st.warning("Please select a timepoint column above before filtering.")
+        st.stop()
+
+    # Base metadata for filtering
+    md_base = st.session_state.get("chemprop1_md_full", subset_chemprop_md).copy()
+
+    # Make sure the cleaned numeric timepoint column is used for ChemProp1 logic
+    if "chemprop1_md" in st.session_state and isinstance(st.session_state["chemprop1_md"], pd.DataFrame):
+        if timepoint_column in st.session_state["chemprop1_md"].columns:
+            md_base[timepoint_column] = st.session_state["chemprop1_md"][timepoint_column]
+
+    # Feature table aligned to metadata samples
+    ft_base = st.session_state["ft_for_analysis"].copy()
+    ft_base = ft_base.loc[:, md_base.index]  # ensure alignment
+
+    # -------------------------------
+    # 1) Initial Timepoint Filter (exactly 2)
+    # -------------------------------
     with st.container():
         st.write("#### Initial Timepoint Filter")
         c1, c2 = st.columns(2)
 
-        # First filter condition defaults to the timepoint column (`chemprop_row`)
-        # This will be disabled so users cannot change it
-        attribute_column = c1.selectbox(
-            "Select the column for categorization (Timepoints)", 
-            options=chemprop_row, 
-            disabled=True
+        c1.selectbox(
+            "Select the column for categorization (Timepoints)",
+            options=[timepoint_column],
+            index=0,
+            disabled=True,
         )
 
-        # Multi-select for exactly two timepoints
         subset_group = c2.multiselect(
-            "Select exactly TWO timepoints for filtering", 
-            options=sorted(subset_chemprop_md[chemprop_row].dropna().astype(str).stack().unique()),
-            max_selections=2
+            "Select exactly TWO timepoints for filtering",
+            options=sorted(md_base[timepoint_column].dropna().astype(str).unique()),
+            max_selections=2,
         )
 
-        # Apply the first filter if two timepoints are selected
-        if len(subset_group) == 2:
+    if len(subset_group) != 2:
+        st.info("Choose exactly two timepoints to continue.")
+        st.stop()
 
-            # Filter indices based on the selected timepoints
-            # Ensure `timepoint_column` is correctly set to the column name from `chemprop_row`
-            timepoint_column = chemprop_row if isinstance(chemprop_row, str) else chemprop_row[0]
-            subset_group = list(map(str, subset_group))  # Convert subset_group to strings if needed for matching
-            subgroup_indices = subset_chemprop_md[subset_chemprop_md[timepoint_column].astype(str).isin(subset_group)].index
+    subset_group = list(map(str, subset_group))
+    tp_mask = md_base[timepoint_column].astype(str).isin(subset_group)
 
-            # Filter feature table and metadata based on the selected indices
-            subset_ft = st.session_state['ft_for_analysis'].loc[:, subgroup_indices]
-            subset_md = subset_chemprop_md.loc[subgroup_indices]
-            
-            # Save to session state for later use
-            st.session_state['chemprop1_ft'] = subset_ft
-            st.session_state['chemprop1_subset_md'] = subset_md
-            st.session_state['chemprop1_md'] = subset_md[chemprop_row]
+    md_after_tp = md_base.loc[tp_mask].copy()
+    ft_after_tp = ft_base.loc[:, md_after_tp.index].copy()
 
-            filtered_tab_info= [
-                ("chemprop1_subset_md", "Filtered Metadata"),
-                ("chemprop1_ft", "Filtered Feature Table"),
-            ]
+    # -------------------------------
+    # 2) Additional Filters (any column), up to 10
+    # -------------------------------
+    st.write("#### Additional Filters (optional)")
 
-            # Display the filtered data immediately
-            with st.expander(f"Filtered Tables"):
-                display_tables_in_tabs(filtered_tab_info)
+    MAX_EXTRA_FILTERS = 10
+    if "chemprop1_extra_filters" not in st.session_state:
+        st.session_state["chemprop1_extra_filters"] = []  # [{"column": None, "values": []}, ...]
 
-            # Option to add another filter
-            add_filter = st.checkbox("Would you like to add another filter?", False)
-            if add_filter:
-                with st.container():
-                    c1, c2 = st.columns(2)
+    col_add, col_clear = st.columns([1, 1])
 
-                    # Allow the user to select any column for further filtering
-                    additional_column = c1.selectbox(
-                        "Select the column for categorization (Ex: Treatments, Replicates)",
-                        options=st.session_state['chemprop1_subset_md'].columns,
-                        key="additional_column"
-                    )
+    with col_add:
+        if st.button(
+            "➕ Add filter",
+            disabled=(len(st.session_state["chemprop1_extra_filters"]) >= MAX_EXTRA_FILTERS),
+        ):
+            st.session_state["chemprop1_extra_filters"].append({"column": None, "values": []})
 
-                    # Multi-select for categories in the selected column
-                    additional_group = c2.multiselect(
-                        "Select categories for additional filtering",
-                        options=sorted(st.session_state['chemprop1_subset_md'][additional_column].dropna().unique()),
-                        key="additional_group"
-                    )
+    with col_clear:
+        if st.button("🧹 Clear all filters", disabled=(len(st.session_state["chemprop1_extra_filters"]) == 0)):
+            st.session_state["chemprop1_extra_filters"] = []
 
-                    # Apply the additional filter if categories are selected
-                    if additional_group:
-                       # timepoint_column = chemprop_row if isinstance(chemprop_row, str) else chemprop_row[0]
-                                               
-                       # subgroup_indices = subset_chemprop_md[subset_chemprop_md[timepoint_column].astype(str).isin(subset_group)].index
+    available_columns = list(md_after_tp.columns)
+    # Optional: don't offer the timepoint column again since it's already handled
+    # available_columns = [c for c in md_after_tp.columns if c != timepoint_column]
 
-                        additional_group = list(map(str, additional_group))  # Convert the group to strings if needed for matching
-                        additional_indices = st.session_state['chemprop1_subset_md'][st.session_state['chemprop1_subset_md'][additional_column].astype(str).isin(additional_group)].index
-                        
-                        # Update the feature table and metadata based on additional filtering
-                        final_ft = subset_ft.loc[:, additional_indices]
-                        final_md = subset_md.loc[additional_indices]
-                
-                        # Update session state with the final filtered tables
-                        st.session_state['chemprop1_ft'] = final_ft
-                        st.session_state['chemprop1_subset_md'] = final_md
-                        st.session_state['chemprop1_md'] = final_md[chemprop_row]
+    for i, f in enumerate(st.session_state["chemprop1_extra_filters"]):
+        with st.container():
+            left, mid, right = st.columns([3, 5, 1])
 
-                        # Display the final filtered data
-                        final_filtered_tabs= [
-                            ("chemprop1_subset_md", "Filtered Metadata"),
-                            ("chemprop1_ft", "Filtered Feature Table"),
-                        ]
+            selected_col = left.selectbox(
+                f"Filter {i+1} – Column",
+                options=["(choose)"] + available_columns,
+                index=0 if not f.get("column") else (available_columns.index(f["column"]) + 1),
+                key=f"chemprop1_filter_col_{i}",
+            )
+            selected_col = None if selected_col == "(choose)" else selected_col
+            st.session_state["chemprop1_extra_filters"][i]["column"] = selected_col
 
-                        # Display the filtered data immediately
-                        with st.expander(f"Final Filtered Tables"):
-                            display_tables_in_tabs(final_filtered_tabs)
+            if selected_col:
+                val_options = sorted(md_after_tp[selected_col].dropna().astype(str).unique())
+            else:
+                val_options = []
+
+            selected_vals = mid.multiselect(
+                f"Filter {i+1} – Values",
+                options=val_options,
+                default=[v for v in (f.get("values") or []) if str(v) in val_options],
+                key=f"chemprop1_filter_vals_{i}",
+            )
+            st.session_state["chemprop1_extra_filters"][i]["values"] = selected_vals
+
+            if right.button("✖", key=f"chemprop1_filter_remove_{i}"):
+                st.session_state["chemprop1_extra_filters"].pop(i)
+                st.rerun()
+
+    # Apply extra filters sequentially
+    final_md, final_ft = apply_md_filters(md_after_tp, ft_after_tp, st.session_state["chemprop1_extra_filters"])
+
+    # -------------------------------
+    # Save results + show tables
+    # -------------------------------
+    st.session_state["chemprop1_ft"] = final_ft
+    st.session_state["chemprop1_subset_md"] = final_md
+    st.session_state["chemprop1_md"] = final_md[[timepoint_column]]
+
+    with st.expander("Filtered Tables", expanded=False):
+        display_tables_in_tabs([
+            ("chemprop1_subset_md", "Filtered Metadata"),
+            ("chemprop1_ft", "Filtered Feature Table"),
+        ])
+
+    st.caption(f"Samples remaining: {final_md.shape[0]}")
+    if final_md.shape[0] == 0:
+        st.warning("No samples left after filtering — loosen one of the filters.")
+
 
 # Streamlit Interface
 st.markdown('## Calculate ChemProp1 Scores')
@@ -236,6 +322,13 @@ if dfs is None:
     st.stop()
 
 network_df, features_df, metadata_df = dfs
+
+time_series = st.session_state.get("chemprop1_md")
+
+if time_series is not None:
+    time_col = time_series.columns[0]
+
+    metadata_df = sort_metadata_by_selected_time(metadata_df, time_col)
 
 run_flag, mode = chemprop1_controls()
 if not run_flag:

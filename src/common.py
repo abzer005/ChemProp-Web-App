@@ -60,7 +60,7 @@ def page_setup():
         with col1:
             st.markdown(
                 f'''
-                <a href="https://github.com/Functional-Metabolomics-Lab/ChemProp-Web-App" target="_blank">
+                <a href="https://www.functional-metabolomics.com/resources" target="_blank">
                     <img src="data:image/png;base64,{base64.b64encode(open("assets/chemprop2_logo.png", "rb").read()).decode()}"
                        style="max-width:100%; height:auto;">
                 </a>
@@ -82,7 +82,7 @@ def page_setup():
         st.markdown("## Functional-Metabolomics-Lab")
         c1, c2, c3 = st.columns(3)
         c1.markdown(
-            """<a href="https://github.com/Functional-Metabolomics-Lab">
+            """<a href="https://github.com/Functional-Metabolomics-Lab/ChemProp-Web-App">
             <img src="data:image/png;base64,{}" width="50">
             </a>""".format(
                 base64.b64encode(open("./assets/github-mark.png", "rb").read()).decode()
