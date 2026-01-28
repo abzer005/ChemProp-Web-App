@@ -111,7 +111,8 @@ jobs:
         cp ShowSuccessMessage.vbs SourceDir
         cp assets/chemprop2app_license.rtf SourceDir
         # Logo of app
-        cp assets/chemprop_icon.png SourceDir
+        cp assets/chemprop2.ico SourceDir
+
 
     - name: Generate WiX XML file
       shell: bash
