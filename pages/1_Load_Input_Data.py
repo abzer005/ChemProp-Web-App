@@ -282,9 +282,9 @@ else:
 
 st.warning(
     "After data cleanup, proceed to the **ChemProp1** or **ChemProp2** analysis pages "
-    "based on the number of timepoints in your dataset. "
+    "based on the number of timepoints in your dataset. "  
     "Use **ChemProp1** for datasets with **exactly two timepoints**, and **ChemProp2** "
-    "for datasets with **three or more timepoints**. "
+    "for datasets with **three or more timepoints**. "  
     "You can access both analysis modules from the **left-hand sidebar navigation menu**, "
     "where each module is listed as a separate page."
 )
