@@ -281,12 +281,11 @@ else:
     st.warning("Data not loaded. Please load the data first.")
 
 st.warning(
-    "After data cleanup, proceed to the **ChemProp1** or **ChemProp2** analysis pages "
-    "based on the number of timepoints in your dataset. "  
-    "Use **ChemProp1** for datasets with **exactly two timepoints**, and **ChemProp2** "
-    "for datasets with **three or more timepoints**. "  
-    "You can access both analysis modules from the **left-hand sidebar navigation menu**, "
-    "where each module is listed as a separate page."
+    "**Next steps after data cleanup:**\n\n"
+    "- Choose the appropriate analysis module based on your dataset.\n"
+    "- **ChemProp1** → exactly **2 timepoints**.\n"
+    "- **ChemProp2** → **3 or more timepoints**.\n"
+    "- Access both modules from the **left-hand sidebar navigation menu**."
 )
 
 # Displaying the message with a link
@@ -301,3 +300,4 @@ st.markdown("""
     explore our <a href="https://fbmn-statsguide.gnps2.org/" target="_blank"><b>FBMN-STATS webpage</b></a>.
     </div>
     """, unsafe_allow_html=True)
+
