@@ -161,7 +161,7 @@ jobs:
             </Component>
 
             <!-- Provide icon here; it should exist in the SourceDir folder -->
-            <Icon Id="AppIcon" SourceFile="SourceDir/chemprop_icon.png" />
+            <Icon Id="AppIcon" SourceFile="SourceDir/chemprop2.ico" />
 
             <!-- Run app directly after installation -->
             <!-- <CustomAction Id="RunApp" Directory="AppSubFolder" Execute="deferred" Return="asyncNoWait" Impersonate="no"
