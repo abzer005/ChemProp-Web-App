@@ -21,18 +21,27 @@ from src.chemprop1_helpers import render_spectra_modifinder
 
 
 def get_chemprop2_inputs_from_state():
-    required = ["nw", "chemprop_ft", "chemprop_md"]
+    required = ["nw", "chemprop2_ft", "chemprop2_md"]
     if not all(k in st.session_state for k in required):
         return None
 
     network_df = st.session_state["nw"].copy()
-    features_df = st.session_state["chemprop_ft"].copy()
-    metadata_df = st.session_state["chemprop_md"].copy()
+    features_df = st.session_state["chemprop2_ft"].copy()
+    metadata_df = st.session_state["chemprop2_md"].copy()
 
     if network_df.empty or features_df.empty or metadata_df.empty:
         return None
 
+    # Ensure feature table columns match metadata index (critical)
+    common = metadata_df.index.intersection(features_df.columns)
+    if common.empty:
+        return None
+
+    features_df = features_df.loc[:, common]
+    metadata_df = metadata_df.loc[common]
+
     return network_df, features_df, metadata_df
+
 
 def chemprop2_controls():
     if "run_chemprop2" not in st.session_state:
@@ -168,6 +177,164 @@ def render_chemprop2_results_summary(network_df, result_df):
     if network_df.shape[0] != result_df.shape[0]:
         st.warning("The reduced number of edges might be due to the removal of blank entries.")
 
+def generate_graphml_bytes_with_secondary_edges_chemprop2(df) -> bytes:
+    """Return a GraphML file (bytes) generated from ChemProp2 scores."""
+    G = nx.MultiDiGraph()
+
+    node_table = st.session_state.get("chemprop_ft")
+    
+    for _, row in df.iterrows():
+        clusterid1 = row["CLUSTERID1"]
+        clusterid2 = row["CLUSTERID2"]
+
+        id1_name = row["ID1_name"] if "ID1_name" in row else str(clusterid1)
+        id2_name = row["ID2_name"] if "ID2_name" in row else str(clusterid2)
+
+        G.add_node(clusterid1, node_names=id1_name)
+        G.add_node(clusterid2, node_names=id2_name)
+
+        if node_table is not None:
+            if clusterid1 in node_table.index:
+                for col in node_table.columns:
+                    G.nodes[clusterid1][col] = node_table.loc[clusterid1, col]
+            if clusterid2 in node_table.index:
+                for col in node_table.columns:
+                    G.nodes[clusterid2][col] = node_table.loc[clusterid2, col]
+
+        primary_edge_attributes = {
+            'ComponentIndex': row['ComponentIndex'],
+            'DeltaMZ': row['DeltaMZ'],
+            'ChemProp2': row['ChemProp2'],
+            'ChemProp_spearman': row['ChemProp_spearman'],
+            'ChemProp_log': row['ChemProp_log'],
+            'ChemProp_sqrt': row['ChemProp_sqrt'],
+            'label': f"∆mz: {row['DeltaMZ']:.2f}",
+            'color': "black"
+        }
+
+        if "Cosine" in df.columns:
+            primary_edge_attributes["Cosine"] = row["Cosine"]
+
+        if "Neighbor" in df.columns:
+            primary_edge_attributes["Neighbor"] = row["Neighbor"]
+
+        G.add_edge(clusterid1, clusterid2, key="primary", **primary_edge_attributes)
+
+        # Define secondary edge attributes based on abs_ChemProp2 and Sign_ChemProp2
+        abs_chemprop = row['abs_ChemProp2']
+        sign_chemprop2 = row['Sign_ChemProp2']
+        
+        secondary_edge_attributes = {
+                'weight': abs_chemprop,
+                'label': f"{abs_chemprop:.2f}",
+                'color': "red",
+                'abs_ChemProp2': abs_chemprop,
+                'abs_ChemProp_spearman': row['abs_ChemProp_spearman'],
+                'abs_ChemProp_log': row['abs_ChemProp_log'],
+                'abs_ChemProp_sqrt': row['abs_ChemProp_sqrt']
+                }
+
+        if sign_chemprop2 == 1:
+            G.add_edge(clusterid1, clusterid2, key="secondary", **secondary_edge_attributes, arrow=True)
+        elif sign_chemprop2 == -1:
+            G.add_edge(clusterid2, clusterid1, key="secondary", **secondary_edge_attributes, arrow=True)
+
+    buf = io.BytesIO()
+    nx.write_graphml(G, buf)          # <- file-like object supported
+    buf.seek(0)
+    return buf.getvalue()
+
+# def generate_graphml_with_secondary_edges_chemprop2(df, output_file):
+#     """
+#     Generate a GraphML file from the ChemProp2_scores DataFrame
+    
+#     Parameters:
+#     df (pd.DataFrame): The ChemProp2_scores DataFrame containing node and edge data.
+#     output_file (str): The name of the GraphML file to generate.
+#     """
+#     # Create a directed graph allowing multiple edges
+#     G = nx.MultiDiGraph()
+
+#     # Check for 'chemprop_ft' in session state for additional node data
+#     node_table = st.session_state['chemprop_ft'] if 'chemprop_ft' in st.session_state else None
+
+#     # Add nodes and edges with attributes
+#     for _, row in df.iterrows():
+#         clusterid1 = row['CLUSTERID1']
+#         clusterid2 = row['CLUSTERID2']
+
+#         # Extract node names
+#         id1_name = row['ID1_name'] if 'ID1_name' in row else str(clusterid1)
+#         id2_name = row['ID2_name'] if 'ID2_name' in row else str(clusterid2)
+        
+#         # Add nodes with optional attributes
+#         G.add_node(clusterid1, node_names=id1_name)
+#         G.add_node(clusterid2, node_names=id2_name)
+
+#         # Add additional attributes from node_table if available
+#         if node_table is not None:
+#             if clusterid1 in node_table.index:
+#                 for col in node_table.columns:
+#                     G.nodes[clusterid1][col] = node_table.loc[clusterid1, col]
+#             if clusterid2 in node_table.index:
+#                 for col in node_table.columns:
+#                     G.nodes[clusterid2][col] = node_table.loc[clusterid2, col]
+
+#         # Define edge attributes for the primary edge
+#         primary_edge_attributes = {
+#             'ComponentIndex': row['ComponentIndex'],
+#             'Cosine': row['Cosine'],
+#             'DeltaMZ': row['DeltaMZ'],
+#             'ChemProp2': row['ChemProp2'],
+#             'ChemProp_spearman': row['ChemProp_spearman'],
+#             'ChemProp_log': row['ChemProp_log'],
+#             'ChemProp_sqrt': row['ChemProp_sqrt'],
+#             'label': f"∆mz: {row['DeltaMZ']:.2f}",
+#             'color': "black"
+#         }
+
+#         # Add primary edge
+#         G.add_edge(clusterid1, clusterid2, key="primary", **primary_edge_attributes)
+
+#         # Define secondary edge attributes based on abs_ChemProp2 and Sign_ChemProp2
+#         abs_chemprop = row['abs_ChemProp2']
+#         sign_chemprop2 = row['Sign_ChemProp2']
+#         secondary_edge_attributes = {
+#                 'weight': abs_chemprop,
+#                 'label': f"{abs_chemprop:.2f}",
+#                 'color': "red",
+#                 'abs_ChemProp2': row['abs_ChemProp2'],
+#                 'abs_ChemProp_spearman': row['abs_ChemProp_spearman'],
+#                 'abs_ChemProp_log': row['abs_ChemProp_log'],
+#                 'abs_ChemProp_sqrt': row['abs_ChemProp_sqrt']
+#                 }
+#         # Use Sign_ChemProp2 to determine direction of the secondary edge
+#         if sign_chemprop2 == 1:
+#             G.add_edge(clusterid1, clusterid2, key="secondary", **secondary_edge_attributes, arrow=True)
+#         elif sign_chemprop2 == -1:
+#             G.add_edge(clusterid2, clusterid1, key="secondary", **secondary_edge_attributes, arrow=True)
+
+#     # Write the graph to GraphML
+#     nx.write_graphml(G, output_file)
+#     return output_file
+
+def build_graphml_zip_bytes_chemprop2(df) -> bytes:
+    
+    graphml_bytes = generate_graphml_bytes_with_secondary_edges_chemprop2(df)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    style_path = os.path.join(base_dir, "resources", "ChemProp2_styles.xml")
+
+    if not os.path.exists(style_path):
+        raise FileNotFoundError(f"ChemProp2 styles.xml not found at: {style_path}")
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.writestr("chemprop2_graph.graphml", graphml_bytes)
+        z.write(style_path, arcname="styles.xml")
+
+    zip_buf.seek(0)
+    return zip_buf.getvalue()
 
 def render_chemprop2_download_buttons(result_df):
     user_filename = st.text_input(
@@ -190,9 +357,20 @@ def render_chemprop2_download_buttons(result_df):
         )
 
     with col2:
-        # remove the __name__ guard in Streamlit; it’s not needed
-        if st.button("Download GraphML (ZIP)"):
-            generate_graphml_zip_chemprop2()
+        if "ChemProp2_scores" in st.session_state:
+            df_cp2 = st.session_state["ChemProp2_scores"].copy()
+            try:
+                zip_bytes = build_graphml_zip_bytes_chemprop2(df_cp2)
+                st.download_button(
+                    label="Download GraphML (ZIP)",
+                    data=zip_bytes,
+                    file_name="chemprop2_graph_with_styles.zip",
+                    mime="application/zip",
+                )
+            except Exception as e:
+                st.error(f"GraphML export failed: {e}")
+        else:
+            st.info("Run ChemProp2 first to enable GraphML export.")
 
     with col3:
         gnps_task_id = st.session_state.get("gnps_task_id")
@@ -210,43 +388,30 @@ def render_chemprop2_download_buttons(result_df):
                 type="primary",
             )
         else:
-            st.info("ℹ️ GNPS task ID not available for network visualization.")
-
-
-
-def generate_graphml_zip_chemprop2():
-    if 'ChemProp2_scores' in st.session_state:
-        df = st.session_state['ChemProp2_scores'].copy()
-
-        chemprop2_graphml_filename = "chemprop_graph.graphml"
-        style_filename = "resources/ChemProp2_styles.xml"
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            chemprop2_graphml_path = os.path.join(temp_dir, chemprop2_graphml_filename)
-            generate_graphml_with_secondary_edges_chemprop2(df, chemprop2_graphml_path)
-
-            # Full path to styles.xml
-            style_path = os.path.join(os.path.dirname(__file__), style_filename)
-            
-            # Check if the styles.xml file exists at the calculated path
-            if not os.path.exists(style_path):
-                st.error("The styles.xml file is not found in the 'resources' folder.")
-                return
-
-            # Create the zip file in the temporary directory
-            zip_path = os.path.join(temp_dir, 'chemprop2_graph_with_styles.zip')
-            with zipfile.ZipFile(zip_path, 'w') as zipf:
-                zipf.write(chemprop2_graphml_path, arcname=chemprop2_graphml_filename)
-                zipf.write(style_path, arcname="styles.xml")
-
-            # Provide the zip file for download
-            with open(zip_path, 'rb') as f:
-                st.download_button(
-                    label="Download GraphML and Styles as ZIP",
-                    data=f,
-                    file_name='chemprop2_graph_with_styles.zip',
-                    mime='application/zip'
+            st.button("Visualize Network in GNPS2",disabled=True,)
+            st.caption(
+                "Requires **FBMN Task ID (GNPS2)** input mode. "
+                "Not available for Example dataset or Manual upload."
                 )
+
+
+def build_graphml_zip_bytes_chemprop2(df) -> bytes:
+    graphml_bytes = generate_graphml_bytes_with_secondary_edges_chemprop2(df)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    style_path = os.path.join(base_dir, "resources", "ChemProp2_styles.xml")
+
+    if not os.path.exists(style_path):
+        raise FileNotFoundError(f"ChemProp2 styles.xml not found at: {style_path}")
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.writestr("chemprop2_graph.graphml", graphml_bytes)
+        z.write(style_path, arcname="styles.xml")
+
+    zip_buf.seek(0)
+    return zip_buf.getvalue()
+
 
 def render_chemprop2_scores_plot(scores_df):
     df = scores_df.copy()
@@ -404,82 +569,6 @@ def plot_intensity_trends_single_row_chemprop2(row, feature_table, metadata):
     )
 
     return fig, status
-
-
-def generate_graphml_with_secondary_edges_chemprop2(df, output_file):
-    """
-    Generate a GraphML file from the ChemProp2_scores DataFrame
-    
-    Parameters:
-    df (pd.DataFrame): The ChemProp2_scores DataFrame containing node and edge data.
-    output_file (str): The name of the GraphML file to generate.
-    """
-    # Create a directed graph allowing multiple edges
-    G = nx.MultiDiGraph()
-
-    # Check for 'chemprop_ft' in session state for additional node data
-    node_table = st.session_state['chemprop_ft'] if 'chemprop_ft' in st.session_state else None
-
-    # Add nodes and edges with attributes
-    for _, row in df.iterrows():
-        clusterid1 = row['CLUSTERID1']
-        clusterid2 = row['CLUSTERID2']
-
-        # Extract node names
-        id1_name = row['ID1_name'] if 'ID1_name' in row else str(clusterid1)
-        id2_name = row['ID2_name'] if 'ID2_name' in row else str(clusterid2)
-        
-        # Add nodes with optional attributes
-        G.add_node(clusterid1, node_names=id1_name)
-        G.add_node(clusterid2, node_names=id2_name)
-
-        # Add additional attributes from node_table if available
-        if node_table is not None:
-            if clusterid1 in node_table.index:
-                for col in node_table.columns:
-                    G.nodes[clusterid1][col] = node_table.loc[clusterid1, col]
-            if clusterid2 in node_table.index:
-                for col in node_table.columns:
-                    G.nodes[clusterid2][col] = node_table.loc[clusterid2, col]
-
-        # Define edge attributes for the primary edge
-        primary_edge_attributes = {
-            'ComponentIndex': row['ComponentIndex'],
-            'Cosine': row['Cosine'],
-            'DeltaMZ': row['DeltaMZ'],
-            'ChemProp2': row['ChemProp2'],
-            'ChemProp_spearman': row['ChemProp_spearman'],
-            'ChemProp_log': row['ChemProp_log'],
-            'ChemProp_sqrt': row['ChemProp_sqrt'],
-            'label': f"∆mz: {row['DeltaMZ']:.2f}",
-            'color': "black"
-        }
-
-        # Add primary edge
-        G.add_edge(clusterid1, clusterid2, key="primary", **primary_edge_attributes)
-
-        # Define secondary edge attributes based on abs_ChemProp2 and Sign_ChemProp2
-        abs_chemprop = row['abs_ChemProp2']
-        sign_chemprop2 = row['Sign_ChemProp2']
-        secondary_edge_attributes = {
-                'weight': abs_chemprop,
-                'label': f"{abs_chemprop:.2f}",
-                'color': "red",
-                'abs_ChemProp2': row['abs_ChemProp2'],
-                'abs_ChemProp_spearman': row['abs_ChemProp_spearman'],
-                'abs_ChemProp_log': row['abs_ChemProp_log'],
-                'abs_ChemProp_sqrt': row['abs_ChemProp_sqrt']
-                }
-        # Use Sign_ChemProp2 to determine direction of the secondary edge
-        if sign_chemprop2 == 1:
-            G.add_edge(clusterid1, clusterid2, key="secondary", **secondary_edge_attributes, arrow=True)
-        elif sign_chemprop2 == -1:
-            G.add_edge(clusterid2, clusterid1, key="secondary", **secondary_edge_attributes, arrow=True)
-
-    # Write the graph to GraphML
-    nx.write_graphml(G, output_file)
-
-    return output_file
 
 
 def calculate_fdr(edge_df, features_df, metadata_df, score_range=(-1, 1), bin_size=0.001):
@@ -651,6 +740,17 @@ def render_chemprop2_filters_and_plots(scores_df, features_df, metadata_df):
 
         filtered_df = get_chemprop2_filtered_edges_ui(df, filter_mode)
         st.dataframe(filtered_df, hide_index=True, use_container_width=True)
+    
+    with st.expander("ℹ️ How to interpret the selected edge?", expanded=False):
+        st.info("""
+    Below, you can view the **intensity trend plot** for the selected edge along with its **network view**.
+
+    - In the network, the **arrow direction** reflects the ChemProp2 score. 
+    - You can **zoom**, **pan**, and **drag nodes** to explore the network.
+    - Use the **edge label dropdown** to display different edge attributes.
+    - If the network moves out of view, select a **different edge label option** to reset the view.
+    """)    
+        
     render_chemprop2_edge_detail_plots(filtered_df, scores_df, features_df, metadata_df)
     if (st.session_state.get("gnps_task_id") or "").strip():
         render_spectra_modifinder(filtered_df, st.session_state.get("an_gnps"))
@@ -932,114 +1032,5 @@ def generate_graph_from_df_chemprop2(df: pd.DataFrame, filtered_df: pd.DataFrame
 
     return nodes, edges
 
-# def generate_graph_from_df_chemprop2(df, filtered_df, edge_label_column):
-#     """
-#     Generate nodes and edges from the DataFrame. The user can select a column to use as the edge label.
-#     Color specific nodes based on CLUSTERID1 and CLUSTERID2 from filtered_df.
-#     Parameters:
-#     df (pd.DataFrame): The DataFrame containing the node and edge data.
-#     filtered_df (pd.DataFrame): The DataFrame containing a single row with CLUSTERID1 and CLUSTERID2.
-#     edge_label_column (str): The name of the column from df to use as the label for the edges.
-    
-#     Returns:
-#     nodes, edges: Lists of nodes and edges for the graph.
-#     """
-#     nodes = []
-#     edges = []
-#     added_nodes = set()  # Set to track added nodes to avoid duplicates
 
-#     # Get CLUSTERID1 and CLUSTERID2 from filtered_df
-#     id1 = str(filtered_df['CLUSTERID1'].iloc[0])
-#     id2 = str(filtered_df['CLUSTERID2'].iloc[0])
 
-#     # Add the blue node for CLUSTERID1 if it hasn't been added
-#     if id1 not in added_nodes:
-#         nodes.append(Node(id=id1,
-#                           label="Source",  # Adjust label if needed
-#                           size=20, 
-#                           color="blue",
-#                           ))
-#         added_nodes.add(id1)
-
-#     # Add the red node for CLUSTERID2 if it hasn't been added
-#     if id2 not in added_nodes:
-#         nodes.append(Node(id=id2,
-#                           label="Target",  # Adjust label if needed
-#                           size=20, 
-#                           color="red",
-#                           ))
-#         added_nodes.add(id2)
-
-#     for _, row in df.iterrows():
-#         clusterid1 = str(row['CLUSTERID1'])
-#         clusterid2 = str(row['CLUSTERID2'])
-#         abs_chemprop = row['abs_ChemProp2']
-#         sign_chemprop2 = row['Sign_ChemProp2']
-#         deltamz = row['DeltaMZ']
-#         id1_name = row['ID1_name'] if 'ID1_name' in row else clusterid1
-#         id2_name = row['ID2_name'] if 'ID2_name' in row else clusterid2
-#         mz1 = row['ID1_mz']
-#         mz2 = row['ID2_mz']
-#         rt1 = row['ID1_RT']
-#         rt2 = row['ID2_RT']
-
-#         # Get the edge label from the user-selected column
-#         edge_label_value = row[edge_label_column]
-
-#         # Color node1 and node2 based on id1 and id2
-#         color_1 = "blue" if clusterid1 == id1 else "lightgray"
-#         color_2 = "lightgray" if clusterid2 != id2 else "red"
-
-#         # color_1 = "blue" if clusterid1 == id1 else "lightgray"
-#         # color_2 = "red" if clusterid2 == id2 else "lightgray"
-
-#         # Add nodes if not already added
-#         if clusterid1 not in added_nodes:
-#             nodes.append(Node(id=clusterid1, 
-#                               label=f"{mz1:.2f}", 
-#                               size=20, 
-#                               color=color_1,
-#                               title=f"ID: {clusterid1}\n Name: {id1_name}\n m/z: {mz1}\n RT: {rt1}"))
-#             added_nodes.add(clusterid1)
-        
-#         if clusterid2 not in added_nodes:
-#             nodes.append(Node(id=clusterid2,
-#                               label=f"{mz2:.2f}",
-#                               size=20, 
-#                               color=color_2,
-#                               title=f"ID: {clusterid2}\nName: {id2_name}\nm/z: {mz2}\nRT: {rt2}"))
-#             added_nodes.add(clusterid2)
-
-#         # Add edge with arrow based on abs_chemprop and sign_chemprop2
-#         if abs_chemprop > 0:
-#            if sign_chemprop2 == 1:
-#                edges.append(Edge(source=clusterid1, 
-#                                  target=clusterid2,label=f"{edge_label_value:.2f}", 
-#                                  color="orange", 
-#                                  arrow=True, 
-#                                  font={"size": 10})
-#                                  )
-                
-#            elif sign_chemprop2 == -1:
-#                edges.append(Edge(source=clusterid2, 
-#                                  target=clusterid1, 
-#                                  label=f"{edge_label_value:.2f}", 
-#                                  color="orange", arrow=True, 
-#                                  font={"size": 10})
-#                                  )
-    
-#     # Update the red node with the correct label and title information
-#     for node in nodes:
-#         if node.id == id1:
-#             # Find the row in df with the correct information for id1
-#             row = df[(df['CLUSTERID1'] == int(id1))].iloc[0]
-#             node.label = f"{row['ID1_mz']:.2f}"
-#             node.title = f"ID: {id1}\n Name: {row['ID1_name']}\n m/z: {row['ID1_mz']}\n RT: {row['ID1_RT']}"
-#         if node.id == id2:
-#             # Find the row in df with the correct information for id2
-#             row = df[(df['CLUSTERID2'] == int(id2))].iloc[0]
-#             node.label = f"{row['ID2_mz']:.2f}"
-#             node.title = f"ID: {id2}\n Name: {row['ID2_name']}\n m/z: {row['ID2_mz']}\n RT: {row['ID2_RT']}"
-#             break
-
-#     return nodes, edges

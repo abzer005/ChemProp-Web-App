@@ -29,13 +29,28 @@ if "last_input_method" not in st.session_state:
     st.session_state["last_input_method"] = input_method
 
 # --- Detect change in input method ---
-if st.session_state["last_input_method"] != input_method:
-    for key in ["ft", "md", "nw", "an_gnps"]:
-        st.session_state[key] = None
+# if st.session_state["last_input_method"] != input_method:
+#     for key in ["ft", "md", "nw", "an_gnps"]:
+#         st.session_state[key] = None
 
-    if st.session_state["last_input_method"] == "GNPS(2) FBMN task ID":
-        st.session_state["gnps_task_id"] = ""
+#     if st.session_state["last_input_method"] == "GNPS(2) FBMN task ID":
+#         st.session_state["gnps_task_id"] = ""
         
+#     st.session_state["last_input_method"] = input_method
+#     st.rerun()
+
+
+if st.session_state["last_input_method"] != input_method:
+    KEEP_KEYS = {
+        "last_input_method",
+        "input_method",
+        "page",
+    }
+
+    for key in list(st.session_state.keys()):
+        if key not in KEEP_KEYS:
+            del st.session_state[key]
+
     st.session_state["last_input_method"] = input_method
     st.rerun()
 
@@ -201,7 +216,10 @@ if (
              c1, c2 = st.columns(2)
              cutoff = c1.number_input(
                  "cutoff threshold for blank removal",
-                 0.1, 1.0, 0.3, 0.05,
+                 min_value=0.01,
+                 max_value=1.0,
+                 value=0.3,
+                 step=0.05,
                  help="""The recommended cutoff range is between 0.1 and 0.3.
                  Features with intensity ratio of (blank mean)/(sample mean) above the threshold (e.g. 30%) are considered noise/background features.
                  """)
@@ -228,9 +246,9 @@ if (
 
     imputation = st.checkbox("Impute missing values?", 
                              False, 
-                             help=f"These values will be filled with random number between 1 and {cutoff_LOD} (Limit of Detection) during imputation.")
+                             help=f"These values will be filled with random number between 0.1 and {cutoff_LOD} (Limit of Detection) during imputation.")
     if imputation:
-        if cutoff_LOD > 1:
+        if cutoff_LOD > 0.1:
             imputed_ft = impute_missing_values(st.session_state['ft_for_analysis'], cutoff_LOD)
             with st.expander(f"Imputed data - features: {imputed_ft.shape[0]}, samples: {imputed_ft.shape[1]}"):
                 st.dataframe(imputed_ft)
@@ -262,7 +280,14 @@ else:
     # If data is not available, display a message
     st.warning("Data not loaded. Please load the data first.")
 
-st.info('After data cleanup, proceed to the ChemProp1 or ChemProp2 pages  based on the number of timepoints in your data for further analysis.')
+st.warning(
+    "After data cleanup, proceed to the **ChemProp1** or **ChemProp2** analysis pages "
+    "based on the number of timepoints in your dataset. "
+    "Use **ChemProp1** for datasets with **exactly two timepoints**, and **ChemProp2** "
+    "for datasets with **three or more timepoints**. "
+    "You can access both analysis modules from the **left-hand sidebar navigation menu**, "
+    "where each module is listed as a separate page."
+)
 
 # Displaying the message with a link
 st.markdown("""

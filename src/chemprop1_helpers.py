@@ -196,10 +196,14 @@ def run_chemprop1_analysis(desired_network_table, desired_feature_table, chempro
 
 # Function to strip non-numeric characters
 def strip_non_numeric(val):
-    if isinstance(val, str):  # Only apply the regex to string values
-        return re.sub(r'[^\d.]+', '', val)  # Remove everything except digits and dots
-    return val  # If it's not a string (e.g., already numeric), return it as-is
+    if pd.isna(val):
+        return np.nan
 
+    if isinstance(val, str):
+        cleaned = re.sub(r"[^\d\.\-]+", "", val)
+        return cleaned if cleaned != "" else np.nan
+
+    return val
 
 # def add_names_to_chemprop(edge_df, gnps_df):
 #     """
@@ -273,6 +277,31 @@ def strip_non_numeric(val):
 #         merged_df['ID2_RT'] = 0
 
 #     return merged_df
+
+def apply_md_filters(md_df: pd.DataFrame, ft_df: pd.DataFrame, filters: list[dict]):
+    """
+    filters: [{"column": "Treatment", "values": ["Control", "Drug"]}, ...]
+    Sequential AND logic across filters.
+    """
+    if md_df is None or md_df.empty:
+        return md_df, ft_df
+
+    keep_idx = md_df.index
+    for f in filters:
+        col = f.get("column")
+        vals = f.get("values") or []
+        if not col or not vals or col not in md_df.columns:
+            continue
+
+        mask = md_df.loc[keep_idx, col].astype(str).isin(list(map(str, vals)))
+        keep_idx = keep_idx[mask.values]
+
+        if len(keep_idx) == 0:
+            break
+
+    md_out = md_df.loc[keep_idx]
+    ft_out = ft_df.loc[:, keep_idx]
+    return md_out, ft_out
 
 def add_mz_rt_from_ft(
     edge_df: pd.DataFrame,
@@ -495,6 +524,89 @@ def generate_graphml_zip_chemprop1():
                     file_name='chemprop1_graph_with_styles.zip',
                     mime='application/zip'
                 )
+
+
+def generate_graphml_bytes_with_secondary_edges_chemprop1(df) -> bytes:
+    """Return a GraphML file (bytes) generated from ChemProp1 scores."""
+    G = nx.MultiDiGraph()
+
+    node_table = st.session_state.get("chemprop1_ft")
+
+    for _, row in df.iterrows():
+        clusterid1 = row["CLUSTERID1"]
+        clusterid2 = row["CLUSTERID2"]
+
+        id1_name = row["ID1_name"] if "ID1_name" in row else str(clusterid1)
+        id2_name = row["ID2_name"] if "ID2_name" in row else str(clusterid2)
+
+        G.add_node(clusterid1, node_names=id1_name)
+        G.add_node(clusterid2, node_names=id2_name)
+
+        if node_table is not None:
+            if clusterid1 in node_table.index:
+                for col in node_table.columns:
+                    G.nodes[clusterid1][col] = node_table.loc[clusterid1, col]
+            if clusterid2 in node_table.index:
+                for col in node_table.columns:
+                    G.nodes[clusterid2][col] = node_table.loc[clusterid2, col]
+
+        primary_edge_attributes = {
+            "ComponentIndex": row["ComponentIndex"],
+            "DeltaMZ": row["DeltaMZ"],
+            "ChemProp1": row["ChemProp1"],
+            "label": f"∆mz: {row['DeltaMZ']:.2f}",
+            "color": "black",
+        }
+
+        if "Cosine" in df.columns:
+            primary_edge_attributes["Cosine"] = row["Cosine"]
+
+        if "Neighbor" in df.columns:
+            primary_edge_attributes["Neighbor"] = row["Neighbor"]
+
+        G.add_edge(clusterid1, clusterid2, key="primary", **primary_edge_attributes)
+
+        abs_chemprop1 = row["abs_ChemProp1"]
+        sign_chemprop1 = row["Sign_ChemProp1"]
+
+        secondary_edge_attributes = {
+            "weight": abs_chemprop1,
+            "label": f"{abs_chemprop1:.2f}",
+            "color": "red",
+            "abs_ChemProp1": abs_chemprop1,
+        }
+
+        if sign_chemprop1 == 1:
+            G.add_edge(clusterid1, clusterid2, key="secondary", **secondary_edge_attributes, arrow=True)
+        elif sign_chemprop1 == -1:
+            G.add_edge(clusterid2, clusterid1, key="secondary", **secondary_edge_attributes, arrow=True)
+
+    buf = io.BytesIO()
+    nx.write_graphml(G, buf)          # <- file-like object supported
+    buf.seek(0)
+    return buf.getvalue()
+
+import io
+import os
+import zipfile
+
+def build_graphml_zip_bytes_chemprop1(df) -> bytes:
+    graphml_bytes = generate_graphml_bytes_with_secondary_edges_chemprop1(df)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    style_path = os.path.join(base_dir, "resources", "ChemProp1_styles.xml")
+
+    if not os.path.exists(style_path):
+        raise FileNotFoundError(f"ChemProp1 styles.xml not found at: {style_path}")
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        z.writestr("chemprop1_graph.graphml", graphml_bytes)
+        z.write(style_path, arcname="styles.xml")
+
+    zip_buf.seek(0)
+    return zip_buf.getvalue()
+
 
 
 def plot_intensity_trends_single_row_chemprop1(row, feature_table, metadata):
@@ -805,6 +917,16 @@ def run_chemprop1_pipeline(network_df, features_df, metadata_df):
     st.dataframe(chemprop1_df, hide_index=True, use_container_width=True)
     return chemprop1_df
 
+def sort_metadata_by_selected_time(md, time_col):
+    md = md.copy()
+    md["_time_numeric"] = (
+        md[time_col]
+        .astype(str)
+        .str.extract(r"(\d+\.?\d*)")[0]
+    )
+    md["_time_numeric"] = pd.to_numeric(md["_time_numeric"], errors="coerce")
+    md = md.sort_values("_time_numeric", na_position="last")
+    return md.drop(columns="_time_numeric")
 
 def drop_blank_score_rows(df, base_cols: int):
     # Keep everything in the original edge table + drop rows where all extra cols are NaN
@@ -940,9 +1062,20 @@ def render_download_buttons(result_df):
         )
 
     with col2:
-        # remove the __name__ guard in Streamlit; it’s not needed
-        if st.button("Download GraphML (ZIP)"):
-            generate_graphml_zip_chemprop1()
+        if "ChemProp1_scores" in st.session_state:
+            df_cp1 = st.session_state["ChemProp1_scores"].copy()
+            try:
+                zip_bytes = build_graphml_zip_bytes_chemprop1(df_cp1)
+                st.download_button(
+                    label="Download GraphML (ZIP)",
+                    data=zip_bytes,
+                    file_name="chemprop1_graph_with_styles.zip",
+                    mime="application/zip",
+                )
+            except Exception as e:
+                st.error(f"GraphML export failed: {e}")
+        else:
+            st.info("Run ChemProp1 first to enable GraphML export.")
 
     with col3:
         gnps_task_id = st.session_state.get("gnps_task_id")
@@ -960,7 +1093,15 @@ def render_download_buttons(result_df):
                 type="primary",
             )
         else:
-            st.info("ℹ️ GNPS task ID not available for network visualization.")
+            st.button(
+            "Visualize Network in GNPS2",
+            disabled=True,
+            )
+            st.caption(
+                "Requires **FBMN Task ID (GNPS2)** input mode. "
+                "Not available for Example dataset or Manual upload."
+                )
+
 
 
 def render_scores_plot(scores_df):
@@ -999,6 +1140,17 @@ def render_filters_and_plots(scores_df, features_df, metadata_df):
 
         filtered_df = get_filtered_edges_ui(df, filter_mode)
         st.dataframe(filtered_df, hide_index=True, use_container_width=True)
+
+    with st.expander("ℹ️ How to interpret the selected edge?", expanded=False):
+        st.info("""
+    Below, you can view the **intensity trend plot** for the selected edge along with its **network view**.
+
+    - In the network, the **arrow direction** reflects the ChemProp1 score. 
+    - You can **zoom**, **pan**, and **drag nodes** to explore the network.
+    - Use the **edge label dropdown** to display different edge attributes.
+    - If the network moves out of view, select a **different edge label option** to reset the view.
+    """)
+
     render_edge_detail_plots(filtered_df, scores_df, features_df, metadata_df)
     if (st.session_state.get("gnps_task_id") or "").strip():
         render_spectra_modifinder(filtered_df, st.session_state.get("an_gnps"))
@@ -1130,7 +1282,8 @@ def render_edge_detail_plots(filtered_df, all_scores_df, features_df, metadata_d
                 )
 
                 st.markdown(_legend_html(), unsafe_allow_html=True)
-                agraph(nodes=nodes, edges=edges, config=config)
+                
+                agraph(nodes=nodes, edges=edges, config=config,)
 
             except ModuleNotFoundError:
                 st.error("This page requires the `pygraphviz` package, which is not available in the Windows app.")
