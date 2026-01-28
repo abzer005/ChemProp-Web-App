@@ -1,4 +1,4 @@
-filename	ATTRIBUTE_Sample_Type	ATTRIBUTE_Timepoint	ATTRIBUTE_Bacteria	ATTRIBUTE_Replicate
+filename	ATTRIBUTE_Sample_Type	ATTRIBUTE_Timepoint	ATTRIBUTE_Treatment	ATTRIBUTE_Replicate
 Blank_1_20240702123809.mzML Peak area	Blank	Blank	Blank	Blank
 Blank_10.mzML Peak area	Blank	Blank	Blank	Blank
 Blank_15.mzML Peak area	Blank	Blank	Blank	Blank
