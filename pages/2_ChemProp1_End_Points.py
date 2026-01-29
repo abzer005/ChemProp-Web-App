@@ -23,6 +23,7 @@ st.info("""
 Ensure that your metadata table is **properly formatted**, including: 
   - A **filename** column matching the feature table
   - A valid time column with numeric values for the two time points.
+  - Please have the timepoint categories arranged in the desired analysis order (e.g., increasing time), as this order is used during processing and is required for the workflow to run correctly.
 
 👉 Please refer to the **Data Preparation Essentials** section on the **Home** page for
 details on required metadata structure and formatting.
